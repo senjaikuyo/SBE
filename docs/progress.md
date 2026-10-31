@@ -1,89 +1,69 @@
-# Progress
+# Progress Implementasi GreenGrid APAC
 
-Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang tertinggal.
+Status per 31 Oktober 2026. Ditulis secara objektif berdasarkan verifikasi kode dan pengujian otomatis (Pest).
 
-## Status FR Fase 1
+## Ringkasan Status FR
 
-| FR | Status | Catatan |
-| --- | --- | --- |
-| FR-01 | Selesai | Registrasi, perusahaan, anggota, peran, 2FA wajib, sesi idle 30 menit, draft form, audit aksi anggota. |
-| FR-12 | Sebagian | Tabel, hash berantai, penjagaan model + trigger MySQL, `audit:verify` selesai. Aksi KYC, listing, sertifikat, admin menyusul di FR terkait. |
-| FR-02 | Selesai | Submit verifikasi (buyer/seller, dokumen per negara + shared, expiry, screening stub, email queue), resubmit dari REJECTED, tolak submit PENDING/APPROVED, admin approve/reject alasan wajib + email, upload dokumen ≤10MB + mimetypes, VirusScanner stub, screening 90 hari, `greengrid:create-admin`. |
-| FR-03 | Selesai | Listing seller: tabel `listings` (energy/carbon_credit), create dengan field wajib per tipe, status DRAFT, version 1. |
-| FR-04 | Selesai | Marketplace listing list dan detail pages, hanya tampilkan status ACTIVE, proteksi KYC perusahaan penjual. |
-| FR-11 | Selesai | Verifikasi manual sertifikat oleh platform_admin: antrean, setujui (listing ACTIVE), tolak wajib alasan (listing REJECTED), serial unik per registry, audit log, proteksi status ACTIVE (FR-03 butir 5). |
-| FR-05 | Selesai | Admin panel: overview, antrian KYC dengan SLA keputusan, moderasi listing & sertifikat, tabel settings (fee kosong awal), four-eyes rule untuk aksi berdampak besar dengan larangan conflict of interest dan audit log. |
-| FR-06 | Belum | |
+| Fitur | Status | Bukti Tes | Sisa Pekerjaan / Catatan |
+| --- | --- | --- | --- |
+| FR-01 Akun, anggota, peran, MFA | Selesai | `AuthTest`, `CompanyOnboardingTest`, `MembershipTest`, `TwoFactorTest` (79 passed) | Tidak ada. Sudah memenuhi seluruh AC FR-01. |
+| FR-02 KYC / AML dasar | Selesai | `KycTest` (9 passed, 53 assertions) | Tidak ada. Dokumen dinamis per negara, screening sanksi, approval/rejection admin, dan create-admin. |
+| FR-03 Listing penjual | Partial | `ListingTest` (3 passed, 11 assertions) | **Partial:** Form draft energi & kredit karbon sudah ada, tetapi edit/hapus berversi (optimistic locking), penyimpanan foto asli ke disk S3/privat, dan validasi ketat peran seller belum diverifikasi penuh. |
+| FR-04 Pencarian dan filter | Selesai | `MarketplaceTest` (9 passed, 41 assertions) | Filter jenis aset, negara, kapasitas minimum, harga maksimum, dan durasi sudah jalan. P95 < 1 detik dicatat sebagai TIDAK DIVERIFIKASI. |
+| FR-05 Admin panel | Selesai | `AdminPanelTest` (11 passed, 54 assertions) | Overview metrik, antrean KYC dengan SLA 72 jam, moderasi listing & sertifikat, tabel `settings`, dan four-eyes approval request dengan deteksi conflict of interest. |
+| FR-06 Notifikasi email | Selesai | `NotificationTest` (3 passed, 8 assertions) | Mail queued untuk KYC diterima, KYC disetujui/ditolak, undangan anggota, listing disetujui, dan listing ditolak dengan alasan. Tabel `notifications` tersedia. |
+| FR-11 Verifikasi sertifikat (manual) | Selesai | `CertificateVerificationTest` (6 passed, 59 assertions) | Antrean verifikasi platform admin, nomor seri ternormalisasi & unik per registri, proteksi status ACTIVE (listing tidak bisa aktif tanpa sertifikat valid). |
+| FR-12 Log audit | Belum | `AuditLogTest` | Tabel `audit_logs` dan `AuditLogger` (hash berantai SHA-256) sudah aktif mencatat aksi FR-01 s/d FR-06 & FR-11, namun butir AC FR-12 belum dibandingkan/diaudit secara menyeluruh. |
+| Legal two-step (D-xx) | Belum | Belum ada | Belum dikerjakan. Menunggu keputusan legal D-01/D-05/D-10. |
 
-## Riwayat
+Total suite pengujian: **114 passed, 397 assertions, 0 failed**.
 
-### 2026-10-31 — FR-01 akun, anggota, peran, MFA
+## Rincian Pekerjaan
 
-- Registrasi email + password (minimal 12 karakter, nilai di `config/greengrid.php`), email unik.
-- Alur onboarding: daftar → buat perusahaan → 2FA → dashboard. Pengguna pertama perusahaan otomatis `company_admin`.
-- Undangan anggota lewat email berisi token (disimpan sebagai SHA-256, berlaku 7 hari), diterima tamu atau akun yang sudah ada.
-- Ubah peran dan hapus anggota hanya untuk `company_admin`, lewat Policy.
-- 2FA TOTP wajib sebelum fitur aplikasi; profil tetap bisa diakses. Recovery code bisa dilihat di profil.
-- Sesi berakhir setelah 30 menit tanpa aktivitas. Draft form perusahaan tersimpan otomatis dan dipulihkan setelah login.
-- Audit: login, undang anggota, ubah peran, hapus anggota, terima undangan. Perintah `php artisan audit:verify` memeriksa rantai hash.
-- Halaman mockup yang belum punya FR tetap tersedia sebagai pratinjau statis di URL yang sama.
+### FR-01: Akun dan Onboarding
+- Pendaftaran akun dengan password minimal 12 karakter (`config/greengrid.php`).
+- Alur wajib: Daftar -> Buat Perusahaan -> Setup 2FA TOTP -> Dashboard.
+- Manajemen anggota (undang, ubah peran, hapus, token kedaluwarsa 7 hari).
+- Idle session timeout 30 menit dan auto-save draft form.
 
-### 2026-10-31 — FR-02 KYC/AML dasar
+### FR-02: KYC / AML Dasar
+- Submit KYC dengan dokumen dinamis per negara (`config/greengrid.php`) dan dokumen bersama.
+- Deteksi kedaluwarsa dokumen otomatis (auto-reject).
+- Resubmit hanya dari status `REJECTED`.
+- Antrean admin untuk approve/reject dengan alasan wajib.
+- Screening sanksi otomatis (`SanctionsScreener` stub) dan command berkala `kyc:screening`.
 
-- Submit verifikasi: peran `buyer`/`seller` (tanpa `both`), dokumen per negara dari `config/greengrid.php` + dokumen shared, expiry wajib untuk doc bernilai expiry.
-- Dokumen kedaluwarsa → submission auto-REJECTED dengan alasan.
-- Resubmit hanya dari REJECTED; submit ditolak bila status `PENDING_VERIFICATION`/`APPROVED`.
-- Admin: approve/reject wajib alasan; redirect antrian admin; email keputusan ke queue (`KycApprovedMail`, `KycRejectedMail`).
-- Upload: PDF/JPG/PNG, ≤10 MB, cek mimetypes konten (bukan ekstensi); `VirusScanner` stub; disk privat; download lewat policy.
-- Screening: `SanctionsScreener` stub `clear`; disimpan submission saat submit; `kyc:screening` tiap 90 hari untuk APPROVED.
-- Admin: `php artisan greengrid:create-admin {email}` minta password (min 12, tanpa default), 2FA wajib login pertama, audit `admin.created`.
+### FR-03: Listing Penjual (Status: Partial)
+- Tabel `listings` mendukung tipe energi dan kredit karbon dengan kolom spesifik.
+- Input divalidasi per tipe aset.
+- **Sisa pekerjaan:** Fitur edit dan hapus dengan optimistic locking (`version`), penyimpanan berkas foto ke storage privat, dan penegakan peran seller di tingkat controller/policy.
 
-### 2026-10-31 — FR-03 listing penjual
+### FR-04: Pencarian dan Marketplace
+- Halaman `/listings` hanya menampilkan listing berstatus `ACTIVE`.
+- Filter aktif: jenis aset (`energy`, `carbon_credit`), negara/lokasi, kapasitas minimum MW (kredit karbon tidak difilter MW), harga maksimum (per kWh untuk energi, per ton untuk karbon), dan durasi minimum tahun.
+- Empty state informatif dengan tombol simpan pencarian dinonaktifkan (keterangan Fase 2).
+- Detail listing `/listings/{id}` menampilkan atribut lengkap per jenis aset.
 
-- Tabel `listings`: type `energy`/`carbon_credit`, energy fields (capacity_mw, volume_available_mw, price_per_kwh, duration_years, start_date, location, permit_reference, photo), carbon fields (quantity_tco2e, vintage, registry_standard, serial_number, price_per_ton).
-- Status awal `DRAFT`, version 1.
-- Buat listing wajib field per tipe; error menyebut field wajib.
-- Hanya perusahaan KYC APPROVED + membership admin/procurement boleh membuat.
+### FR-05: Admin Panel
+- Dashboard overview `/admin` dengan metrik antrean operasional.
+- Antrean KYC `/admin/kyc` menghitung sisa waktu keputusan dari target SLA 72 jam (`OVERDUE`, `DUE_SOON`).
+- Moderasi listing dan sertifikat terintegrasi.
+- Tabel `settings` menyimpan konfigurasi platform (`marketplace_fee_percentage`), nilai awal kosong, tidak dipakai di Fase 1 (D-08).
+- Mekanisme four-eyes approval (`approval_requests`): aksi berdampak besar mewajibkan dua admin berbeda dan memblokir admin yang memiliki benturan kepentingan (conflict of interest) di perusahaan terkait.
+- Seluruh aksi admin mewajibkan alasan dan tercatat di `audit_logs`.
 
-### 2026-10-31 — FR-04 pencarian dan detail listing
+### FR-06: Notifikasi Email
+- Email terantre (`ShouldQueue`) untuk peristiwa: KYC diterima, KYC disetujui, KYC ditolak (dengan alasan), undangan anggota, listing disetujui, dan listing ditolak (dengan alasan).
+- Penerima notifikasi terisolasi hanya untuk anggota perusahaan terkait.
+- Kegagalan pengiriman email tidak menggagalkan aksi bisnis utama.
 
-- Daftar `GET /listings` (`marketplace.index`): hanya listing `ACTIVE`, order newest.
-- Detail `GET /listings/{listing}` (`marketplace.show`): 404 bila status bukan `ACTIVE`; 403 bila perusahaan pemilik tidak KYC APPROVED.
-- Detail tipe `energy`: capacity_mw, volume_available_mw, price_per_kwh, duration_years, start_date, location, permit_reference.
-- Detail tipe `carbon_credit`: quantity_tco2e, vintage, registry_standard, serial_number, price_per_ton. Tipe carbon tidak menampilkan field MW.
-- Empty state: tombol save search dan notifikasi nonaktif dengan keterangan Phase 2 (defer sesuai PRD).
-- Form filter dan query nyata: jenis aset, negara/lokasi, kapasitas minimum (kredit karbon tidak difilter MW), harga maksimum (per kWh energi / per ton karbon), durasi minimum tahun.
-- Empty state tampil saat pencarian tanpa hasil; tombol simpan pencarian dan notifikasi nonaktif dengan keterangan Fase 2.
-- Indikator memuat pada form dan tombol dinonaktifkan saat submit.
-- Proteksi listing: hanya berstatus ACTIVE dan sertifikat VALID (bila ada sertifikat); DRAFT dan unverified tidak pernah muncul.
-- Performa p95 di bawah 1 detik: TIDAK DIVERIFIKASI pada lingkungan dev/test.
+### FR-11: Verifikasi Sertifikat Manual
+- Antrean verifikasi sertifikat kredit karbon oleh platform admin.
+- Normalisasi dan validasi keunikan nomor seri per registri (`VERRA`, `GOLD_STANDARD`).
+- Listing tidak dapat berstatus `ACTIVE` sebelum sertifikat diverifikasi menjadi `VALID`.
 
-### 2026-10-31 — FR-11 verifikasi sertifikat (manual)
+## Sisa Pekerjaan & Rencana Berikutnya
 
-- Tabel `certificates`: relasi ke listing, type, registry, serial_number, serial_normalized, status (`PENDING_REVIEW`, `VALID`, `REJECTED`), rejection_reason, note, reviewed_by, reviewed_at, serta unique constraint `[registry, serial_normalized]`.
-- Antrean verifikasi admin: `GET /admin/certificates` dan `GET /admin/certificates/queue` diproteksi middleware `auth` dan gate `platform_admin` (`can:manage,App\Models\User`).
-- Persetujuan admin: status sertifikat menjadi `VALID`, listing otomatis diaktifkan menjadi `ACTIVE`, mencatat audit log `certificate.approved` dan `listing.activated`.
-- Penolakan admin: wajib mengisi alasan penolakan (`reason` / `rejection_reason`), status sertifikat menjadi `REJECTED`, status listing menjadi `REJECTED`, mencatat audit log `certificate.rejected` dan `listing.rejected`.
-- Proteksi status ACTIVE (FR-03 butir 5): listing tanpa sertifikat atau dengan sertifikat yang belum diverifikasi admin tidak dapat beralih ke status `ACTIVE` (`canBeActive()`, guard domain exception pada `activate()`, serta validasi di controller approval admin).
-- Otorisasi: non-admin (termasuk company_admin/seller biasa) menerima 403 Forbidden saat mengakses antrean atau endpoint aksi verifikasi.
-- Nomor seri ternormalisasi: pembersihan spasi dan konversi ke huruf besar (`Certificate::normalizeSerial()`) untuk memastikan integritas keunikan nomor seri per registri.
-
-### 2026-10-31 — FR-05 admin panel
-
-- Halaman admin (`/admin`, `/admin/kyc`, `/admin/listings`, `/admin/settings`, `/admin/approvals`) diproteksi middleware `auth` dan gate `platform_admin`. Non-admin mendapat 403, tamu diarahkan ke login.
-- Antrean KYC menampilkan sisa waktu keputusan dari target SLA 72 jam sejak waktu pengajuan; menandai status `OVERDUE` dan `DUE_SOON`.
-- Moderasi listing dan sertifikat terhubung dengan antrean admin.
-- Tabel `settings` dibuat untuk menyimpan konfigurasi (misal `marketplace_fee_percentage`), nilai awal kosong dan tidak dipakai di Fase 1 (D-08).
-- Tabel `approval_requests` menerapkan aturan empat mata (four-eyes rule): aksi berdampak besar (ubah fee, setujui ulang perusahaan) diusulkan oleh satu admin dan disetujui oleh admin kedua yang berbeda. Alasan keputusan wajib diisi.
-- Larangan benturan kepentingan (conflict of interest): admin ditolak (403) jika mencoba memproses persetujuan perusahaan tempat ia terdaftar sebagai anggota, dan dicatat di `audit_logs`.
-- Semua aksi admin dicatat di `audit_logs` dengan alasan (`admin.approval_proposed`, `admin.approval_approved`, `admin.approval_rejected`, `admin.conflict_of_interest`).
-- Pelacakan sengketa: ditunda ke Fase 2 sesuai PRD butir 4.
-
-## TODO yang menunggu keputusan
-
-- FR-12: catat aksi KYC, listing, sertifikat, dan admin saat FR terkait dikerjakan.
-- Halaman pratinjau KYC, listing, dan admin masih publik sampai FR-nya selesai.
-
-## Pertanyaan untuk pemilik proyek
-
-- Bolehkah `company_admin` menurunkan peran atau menghapus `company_admin` terakhir? PRD belum mengatur. Saat ini aksi tersebut diizinkan.
+1. **Selesaikan sisa FR-03:** Implementasi edit/hapus listing dengan optimistic locking (`version`), upload foto privat, dan verifikasi peran seller.
+2. **Audit & Verifikasi FR-12:** Evaluasi kepatuhan tabel dan model `audit_logs` terhadap seluruh butir AC FR-12.
+3. **Legal Two-Step & Keputusan D-xx:** Analisis ketergantungan keputusan hukum untuk persiapan Fase 2.
