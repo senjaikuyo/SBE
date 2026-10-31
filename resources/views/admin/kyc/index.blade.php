@@ -1,12 +1,28 @@
 @php
-    $rows = [
-        ['Andalan Solar Nusantara', 'Indonesia', '2 h ago', '46h left', 'DUE_SOON', '—'],
-        ['Mekong Renewables Co., Ltd', 'Vietnam', '2 d ago', '3h left', 'DUE_SOON', 'Rani K.'],
-        ['Johor Green Power Sdn Bhd', 'Malaysia', '3 d ago', '9h overdue', 'OVERDUE', 'Rani K.'],
-        ['Laos Sunshine Energy', 'Laos', '4 d ago', '1 d 8h overdue', 'OVERDUE', 'Bima P.'],
-        ['Solaris Vietnam JSC', 'Vietnam', '5 h ago', '67h left', null, '—'],
-        ['Nusantara Solar Prima', 'Indonesia', '6 h ago', '66h left', null, '—'],
-    ];
+    $rows = ($submissions ?? collect())->map(function ($sub) {
+        $submittedAt = $sub->submitted_at ?? $sub->created_at ?? now();
+        $deadline = $submittedAt->copy()->addHours(72);
+        $now = now();
+        if ($now->greaterThan($deadline)) {
+            $hoursOverdue = (int) $deadline->diffInHours($now);
+            $sla = $hoursOverdue . 'h overdue';
+            $flag = 'OVERDUE';
+        } else {
+            $hoursLeft = (int) $now->diffInHours($deadline, false);
+            $sla = $hoursLeft . 'h left';
+            $flag = $hoursLeft <= 24 ? 'DUE_SOON' : null;
+        }
+
+        return [
+            $sub->company->name ?? 'Company',
+            $sub->company->country ?? 'ID',
+            $submittedAt->diffForHumans(),
+            $sla,
+            $flag,
+            '—',
+            $sub->id,
+        ];
+    });
 @endphp
 
 <x-layouts.admin title="KYC queue">
@@ -17,9 +33,9 @@
             <p class="mt-1 text-[13px] text-ink-600">Target: median 48 hours, 90% within 72 hours. Overdue rows are flagged.</p>
         </div>
         <div class="flex gap-2 text-[13px]">
-            <a href="#" class="inline-flex items-center gap-1.5 rounded-md bg-ink-900 px-3 py-1.5 font-medium text-white">All <span class="tabular">12</span></a>
-            <a href="#" class="inline-flex items-center gap-1.5 rounded-md border border-ink-300 bg-white px-3 py-1.5 text-ink-700 hover:bg-ink-50">Due soon <span class="tabular">3</span></a>
-            <a href="#" class="inline-flex items-center gap-1.5 rounded-md border border-ink-300 bg-white px-3 py-1.5 text-ink-700 hover:bg-ink-50">Overdue <span class="tabular">2</span></a>
+            <span class="inline-flex items-center gap-1.5 rounded-md bg-ink-900 px-3 py-1.5 font-medium text-white">
+                Pending <span class="tabular">{{ $rows->count() }}</span>
+            </span>
         </div>
     </div>
 
@@ -37,7 +53,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($rows as [$company, $country, $submitted, $sla, $flag, $reviewer])
+                @forelse ($rows as [$company, $country, $submitted, $sla, $flag, $reviewer, $subId])
                     <tr @class([
                         'border-b border-ink-200 last:border-b-0',
                         'border-l-[3px] border-l-danger' => $flag === 'OVERDUE',
@@ -59,22 +75,20 @@
                             <span @class(['text-ink-500' => $reviewer === '—'])>{{ $reviewer }}</span>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <a href="/admin/kyc/1" class="rounded-md border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:bg-ink-50">
+                            <a href="/admin/kyc/{{ $subId }}" class="rounded-md border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:bg-ink-50">
                                 Review
                             </a>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-ink-500">
+                            No companies awaiting KYC review.
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
-
-        <div class="flex items-center justify-between border-t border-ink-200 px-4 py-3 text-[12px] text-ink-500">
-            <span>Showing 6 of 12</span>
-            <div class="flex gap-1">
-                <button type="button" class="rounded-sm border border-ink-300 px-2.5 py-1 text-ink-400" disabled>Previous</button>
-                <button type="button" class="rounded-sm border border-ink-300 bg-white px-2.5 py-1 text-ink-700 hover:bg-ink-50">Next</button>
-            </div>
-        </div>
     </div>
 
 </x-layouts.admin>

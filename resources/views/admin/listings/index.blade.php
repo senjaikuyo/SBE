@@ -1,10 +1,17 @@
 @php
-    $rows = [
-        ['Sumba 20 MW Solar Farm — Phase 2', 'Nusantara Solar Prima', 'energy', '12.000 MW', 'Submitted 1 d ago', 'PENDING_REVIEW'],
-        ['Riau Biomass Carbon 2025', 'Nusantara Solar Prima', 'carbon', '18,000 tCO2e', 'Submitted 2 d ago', 'PENDING_REVIEW'],
-        ['Johor Solar Park 15 MW', 'Johor Green Power', 'energy', '15.000 MW', 'Submitted 3 h ago', 'PENDING_REVIEW'],
-        ['Aceh Coastal Solar', 'Andalan Solar', 'energy', '4.000 MW', 'Submitted 5 d ago', 'REJECTED'],
-    ];
+    $rows = ($listings ?? collect())->map(function ($listing) {
+        $cert = $listing->certificates->first();
+        return [
+            $listing->location ?? 'Listing #' . $listing->id,
+            $listing->company->name ?? 'Company',
+            $listing->type,
+            $listing->type === 'energy' ? ($listing->capacity_mw . ' MW') : ($listing->quantity_tco2e . ' tCO2e'),
+            $listing->created_at->diffForHumans(),
+            $listing->status,
+            $listing->id,
+            $cert !== null && $cert->status === 'VALID',
+        ];
+    });
 @endphp
 
 <x-layouts.admin title="Listing moderation">
@@ -14,8 +21,9 @@
             <p class="mt-1 text-[13px] text-ink-600">Approve to activate, or reject with a reason the seller can act on.</p>
         </div>
         <div class="flex gap-2 text-[13px]">
-            <a href="#" class="inline-flex items-center gap-1.5 rounded-md bg-ink-900 px-3 py-1.5 font-medium text-white">Pending <span class="tabular">3</span></a>
-            <a href="#" class="inline-flex items-center gap-1.5 rounded-md border border-ink-300 bg-white px-3 py-1.5 text-ink-700 hover:bg-ink-50">Rejected <span class="tabular">1</span></a>
+            <span class="inline-flex items-center gap-1.5 rounded-md bg-ink-900 px-3 py-1.5 font-medium text-white">
+                Total listings <span class="tabular">{{ $rows->count() }}</span>
+            </span>
         </div>
     </div>
 
@@ -27,18 +35,18 @@
                     <th scope="col" class="px-4 py-2.5 font-medium">Listing</th>
                     <th scope="col" class="px-4 py-2.5 font-medium">Seller</th>
                     <th scope="col" class="px-4 py-2.5 font-medium">Type</th>
-                    <th scope="col" class="px-4 py-2.5 font-medium">Volume</th>
-                    <th scope="col" class="px-4 py-2.5 font-medium">Submitted</th>
+                    <th scope="col" class="px-4 py-2.5 font-medium">Volume / Capacity</th>
+                    <th scope="col" class="px-4 py-2.5 font-medium">Created</th>
                     <th scope="col" class="px-4 py-2.5 font-medium">Status</th>
                     <th scope="col" class="px-4 py-2.5 text-right font-medium">Action</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($rows as [$title, $seller, $type, $volume, $submitted, $status])
+                @forelse ($rows as [$title, $seller, $type, $volume, $submitted, $status, $id, $hasValidCert])
                     <tr class="border-b border-ink-200 last:border-b-0 hover:bg-ink-50">
                         <td class="px-4 py-3">
-                            <a href="/admin/listings/1" class="font-medium hover:text-brand-700">{{ $title }}</a>
-                            <p class="text-[12px] text-ink-500">Certificate {{ $status === 'PENDING_REVIEW' ? 'awaiting verification' : 'not valid' }}</p>
+                            <span class="font-medium text-ink-900">{{ $title }}</span>
+                            <p class="text-[12px] text-ink-500">Certificate {{ $hasValidCert ? 'verified' : 'not verified / pending' }}</p>
                         </td>
                         <td class="px-4 py-3 text-ink-600">{{ $seller }}</td>
                         <td class="px-4 py-3 text-ink-600">{{ $type === 'energy' ? 'Solar energy' : 'Carbon credits' }}</td>
@@ -46,10 +54,16 @@
                         <td class="px-4 py-3 text-ink-600">{{ $submitted }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="/admin/listings/1" class="rounded-md border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:bg-ink-50">Review</a>
+                            <a href="/admin/listings/{{ $id }}" class="rounded-md border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:bg-ink-50">Review</a>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-ink-500">
+                            No listings in system.
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

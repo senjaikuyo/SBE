@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorSetupController;
 use App\Http\Controllers\AdminCertificateController;
 use App\Http\Controllers\AdminKycController;
+use App\Http\Controllers\AdminPanelController;
 use App\Http\Controllers\KycController;
 use Illuminate\Support\Facades\Route;
 
@@ -158,10 +159,38 @@ Route::get('/listings', [MarketplaceController::class, 'index'])->name('marketpl
 Route::view('/listings/empty', 'marketplace.empty')->name('preview.marketplace.empty');
 Route::get('/listings/{listing}', [MarketplaceController::class, 'show'])->name('marketplace.show');
 
-Route::view('/admin', 'admin.overview')->name('preview.admin.overview');
-Route::view('/admin/kyc', 'admin.kyc.index')->name('preview.admin.kyc.index');
+Route::get('/admin', [AdminPanelController::class, 'overview'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.overview');
+
+Route::get('/admin/kyc', [AdminPanelController::class, 'kycQueue'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.kyc.index');
+
 Route::view('/admin/kyc/{id}', 'admin.kyc.show')->name('preview.admin.kyc.show');
-Route::view('/admin/listings', 'admin.listings.index')->name('preview.admin.listings.index');
+
+Route::get('/admin/listings', [AdminPanelController::class, 'listingsQueue'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.listings.index');
+
 Route::view('/admin/listings/{id}', 'admin.listings.show')->name('preview.admin.listings.show');
-Route::view('/admin/settings', 'admin.settings')->name('preview.admin.settings');
-Route::view('/admin/approvals', 'admin.approvals.index')->name('preview.admin.approvals.index');
+
+Route::get('/admin/settings', [AdminPanelController::class, 'settings'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.settings');
+
+Route::get('/admin/approvals', [AdminPanelController::class, 'approvals'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.approvals.index');
+
+Route::post('/admin/approvals/propose', [AdminPanelController::class, 'propose'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.approvals.propose');
+
+Route::post('/admin/approvals/{approval}/approve', [AdminPanelController::class, 'approve'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.approvals.approve');
+
+Route::post('/admin/approvals/{approval}/reject', [AdminPanelController::class, 'reject'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.approvals.reject');

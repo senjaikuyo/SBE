@@ -12,7 +12,7 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 | FR-03 | Selesai | Listing seller: tabel `listings` (energy/carbon_credit), create dengan field wajib per tipe, status DRAFT, version 1. |
 | FR-04 | Selesai | Marketplace listing list dan detail pages, hanya tampilkan status ACTIVE, proteksi KYC perusahaan penjual. |
 | FR-11 | Selesai | Verifikasi manual sertifikat oleh platform_admin: antrean, setujui (listing ACTIVE), tolak wajib alasan (listing REJECTED), serial unik per registry, audit log, proteksi status ACTIVE (FR-03 butir 5). |
-| FR-05 | Belum | |
+| FR-05 | Selesai | Admin panel: overview, antrian KYC dengan SLA keputusan, moderasi listing & sertifikat, tabel settings (fee kosong awal), four-eyes rule untuk aksi berdampak besar dengan larangan conflict of interest dan audit log. |
 | FR-06 | Belum | |
 
 ## Riwayat
@@ -67,6 +67,17 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 - Proteksi status ACTIVE (FR-03 butir 5): listing tanpa sertifikat atau dengan sertifikat yang belum diverifikasi admin tidak dapat beralih ke status `ACTIVE` (`canBeActive()`, guard domain exception pada `activate()`, serta validasi di controller approval admin).
 - Otorisasi: non-admin (termasuk company_admin/seller biasa) menerima 403 Forbidden saat mengakses antrean atau endpoint aksi verifikasi.
 - Nomor seri ternormalisasi: pembersihan spasi dan konversi ke huruf besar (`Certificate::normalizeSerial()`) untuk memastikan integritas keunikan nomor seri per registri.
+
+### 2026-10-31 — FR-05 admin panel
+
+- Halaman admin (`/admin`, `/admin/kyc`, `/admin/listings`, `/admin/settings`, `/admin/approvals`) diproteksi middleware `auth` dan gate `platform_admin`. Non-admin mendapat 403, tamu diarahkan ke login.
+- Antrean KYC menampilkan sisa waktu keputusan dari target SLA 72 jam sejak waktu pengajuan; menandai status `OVERDUE` dan `DUE_SOON`.
+- Moderasi listing dan sertifikat terhubung dengan antrean admin.
+- Tabel `settings` dibuat untuk menyimpan konfigurasi (misal `marketplace_fee_percentage`), nilai awal kosong dan tidak dipakai di Fase 1 (D-08).
+- Tabel `approval_requests` menerapkan aturan empat mata (four-eyes rule): aksi berdampak besar (ubah fee, setujui ulang perusahaan) diusulkan oleh satu admin dan disetujui oleh admin kedua yang berbeda. Alasan keputusan wajib diisi.
+- Larangan benturan kepentingan (conflict of interest): admin ditolak (403) jika mencoba memproses persetujuan perusahaan tempat ia terdaftar sebagai anggota, dan dicatat di `audit_logs`.
+- Semua aksi admin dicatat di `audit_logs` dengan alasan (`admin.approval_proposed`, `admin.approval_approved`, `admin.approval_rejected`, `admin.conflict_of_interest`).
+- Pelacakan sengketa: ditunda ke Fase 2 sesuai PRD butir 4.
 
 ## TODO yang menunggu keputusan
 
