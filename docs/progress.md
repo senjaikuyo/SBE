@@ -52,7 +52,11 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 - Detail tipe `energy`: capacity_mw, volume_available_mw, price_per_kwh, duration_years, start_date, location, permit_reference.
 - Detail tipe `carbon_credit`: quantity_tco2e, vintage, registry_standard, serial_number, price_per_ton. Tipe carbon tidak menampilkan field MW.
 - Empty state: tombol save search dan notifikasi nonaktif dengan keterangan Phase 2 (defer sesuai PRD).
-- Form filter dari mockup: markup awal, query filter nyata belum dikerjakan (tunda ke FR berikutnya).
+- Form filter dan query nyata: jenis aset, negara/lokasi, kapasitas minimum (kredit karbon tidak difilter MW), harga maksimum (per kWh energi / per ton karbon), durasi minimum tahun.
+- Empty state tampil saat pencarian tanpa hasil; tombol simpan pencarian dan notifikasi nonaktif dengan keterangan Fase 2.
+- Indikator memuat pada form dan tombol dinonaktifkan saat submit.
+- Proteksi listing: hanya berstatus ACTIVE dan sertifikat VALID (bila ada sertifikat); DRAFT dan unverified tidak pernah muncul.
+- Performa p95 di bawah 1 detik: TIDAK DIVERIFIKASI pada lingkungan dev/test.
 
 ### 2026-10-31 — FR-11 verifikasi sertifikat (manual)
 
