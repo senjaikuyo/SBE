@@ -176,13 +176,17 @@ Route::get('/admin/kyc', [AdminPanelController::class, 'kycQueue'])
     ->middleware(['auth', 'can:manage,App\\Models\\User'])
     ->name('admin.kyc.index');
 
-Route::view('/admin/kyc/{id}', 'admin.kyc.show')->name('preview.admin.kyc.show');
+Route::view('/admin/kyc/{id}', 'admin.kyc.show')
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('preview.admin.kyc.show');
 
 Route::get('/admin/listings', [AdminPanelController::class, 'listingsQueue'])
     ->middleware(['auth', 'can:manage,App\\Models\\User'])
     ->name('admin.listings.index');
 
-Route::view('/admin/listings/{id}', 'admin.listings.show')->name('preview.admin.listings.show');
+Route::view('/admin/listings/{id}', 'admin.listings.show')
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('preview.admin.listings.show');
 
 Route::get('/admin/settings', [AdminPanelController::class, 'settings'])
     ->middleware(['auth', 'can:manage,App\\Models\\User'])

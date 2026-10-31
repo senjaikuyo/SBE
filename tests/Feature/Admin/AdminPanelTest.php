@@ -17,7 +17,9 @@ beforeEach(function () {
 it('(a) platform admin can view each built admin page', function () {
     $this->actingAs($this->admin)->get(route('admin.overview'))->assertOk();
     $this->actingAs($this->admin)->get(route('admin.kyc.index'))->assertOk();
+    $this->actingAs($this->admin)->get(route('preview.admin.kyc.show', 1))->assertOk();
     $this->actingAs($this->admin)->get(route('admin.listings.index'))->assertOk();
+    $this->actingAs($this->admin)->get(route('preview.admin.listings.show', 1))->assertOk();
     $this->actingAs($this->admin)->get(route('admin.settings'))->assertOk();
     $this->actingAs($this->admin)->get(route('admin.approvals.index'))->assertOk();
 });
@@ -25,7 +27,9 @@ it('(a) platform admin can view each built admin page', function () {
 it('(b) regular company user gets 403 on every admin page', function () {
     $this->actingAs($this->companyUser)->get(route('admin.overview'))->assertForbidden();
     $this->actingAs($this->companyUser)->get(route('admin.kyc.index'))->assertForbidden();
+    $this->actingAs($this->companyUser)->get(route('preview.admin.kyc.show', 1))->assertForbidden();
     $this->actingAs($this->companyUser)->get(route('admin.listings.index'))->assertForbidden();
+    $this->actingAs($this->companyUser)->get(route('preview.admin.listings.show', 1))->assertForbidden();
     $this->actingAs($this->companyUser)->get(route('admin.settings'))->assertForbidden();
     $this->actingAs($this->companyUser)->get(route('admin.approvals.index'))->assertForbidden();
 });
@@ -33,7 +37,9 @@ it('(b) regular company user gets 403 on every admin page', function () {
 it('(c) unauthenticated guest is redirected to login for each admin page', function () {
     $this->get(route('admin.overview'))->assertRedirect(route('login'));
     $this->get(route('admin.kyc.index'))->assertRedirect(route('login'));
+    $this->get(route('preview.admin.kyc.show', 1))->assertRedirect(route('login'));
     $this->get(route('admin.listings.index'))->assertRedirect(route('login'));
+    $this->get(route('preview.admin.listings.show', 1))->assertRedirect(route('login'));
     $this->get(route('admin.settings'))->assertRedirect(route('login'));
     $this->get(route('admin.approvals.index'))->assertRedirect(route('login'));
 });

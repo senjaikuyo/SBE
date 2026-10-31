@@ -74,7 +74,27 @@ Semua akun demo di bawah ini menggunakan kata sandi:
 ```
 Password1234!
 ```
-*(Catatan: Akun demo telah diset dengan 2FA terkonfirmasi)*.
+
+### Cara Login Akun Demo Tanpa Aplikasi Authenticator (2FA)
+
+Setiap akun demo sudah memiliki **Recovery Code** yang bisa langsung dipakai tanpa perlu memasang aplikasi HP:
+
+1. Masukkan email dan kata sandi (`Password1234!`).
+2. Pada layar verifikasi 2FA, klik tautan **"Use a recovery code"**.
+3. Masukkan kode pemulihan berikut sesuai akun:
+   - `admin1@greengrid.test` &rarr; `code-admin-1`
+   - `admin2@greengrid.test` &rarr; `code-admin2-1`
+   - `seller.admin@nusantara-solar.test` &rarr; `code-s1`
+   - `seller.procure@nusantara-solar.test` &rarr; `code-sp1`
+   - `buyer.admin@singaporedc.test` &rarr; `code-b1`
+   - `pending.admin@mekong-solar.test` &rarr; `code-p1`
+
+**Alternatif jika ingin menggunakan TOTP 6-digit:**
+- Masukkan secret key `JBSWY3DPEHPK3PXP` ke aplikasi authenticator, atau
+- Jalankan perintah ini di terminal untuk mencetak kode 6-digit yang sedang aktif:
+  ```bash
+  python3 -c "import hmac,hashlib,struct,time,base64;k=base64.b32decode('JBSWY3DPEHPK3PXP');c=struct.pack('>Q',int(time.time())//30);h=hmac.new(k,c,hashlib.sha1).digest();o=h[-1]&15;print('%06d'%((struct.unpack('>I',h[o:o+4])[0]&0x7fffffff)%1000000))"
+  ```
 
 | Email | Peran / Pengguna | Perusahaan | Status / Keterangan |
 | --- | --- | --- | --- |

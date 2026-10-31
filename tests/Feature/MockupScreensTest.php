@@ -17,8 +17,6 @@ it('renders every remaining design mockup screen', function (string $uri) {
     '/company/listings/1',
     '/company/listings/1/edit',
     '/listings/empty',
-    '/admin/kyc/1',
-    '/admin/listings/1',
 ]);
 
 it('renders every error page', function (string $view) {
