@@ -7,8 +7,6 @@ it('renders every remaining design mockup screen', function (string $uri) {
     '/privacy',
     '/terms',
     '/invitations/expired',
-    '/company/kyc',
-    '/company/kyc/submit',
     '/company/kyc/owners',
     '/company/kyc/resubmit',
     '/company/kyc/submitted',

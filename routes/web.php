@@ -7,6 +7,8 @@ use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorSetupController;
+use App\Http\Controllers\AdminKycController;
+use App\Http\Controllers\KycController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -68,6 +70,18 @@ Route::middleware(['auth', 'company', 'two-factor'])->group(function (): void {
     Route::delete('/company/members/{membership}', [MembersController::class, 'destroy'])->name('members.destroy');
 });
 
+Route::get('/admin/kyc/queue', [AdminKycController::class, 'queue'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.kyc.queue');
+
+Route::post('/admin/kyc/submissions/{kyc}/approve', [AdminKycController::class, 'approve'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('kyc.approve');
+
+Route::post('/admin/kyc/submissions/{kyc}/reject', [AdminKycController::class, 'reject'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('kyc.reject');
+
 /*
 |--------------------------------------------------------------------------
 | Design previews for screens not implemented yet
@@ -75,8 +89,15 @@ Route::middleware(['auth', 'company', 'two-factor'])->group(function (): void {
 | Static mockups only. Each is replaced by a real controller in its own FR.
 */
 
-Route::view('/company/kyc', 'company.kyc.status')->name('preview.kyc.status');
-Route::view('/company/kyc/submit', 'company.kyc.submit')->name('preview.kyc.submit');
+Route::middleware(['auth', 'company'])->group(function (): void {
+    Route::get('/company/kyc', [KycController::class, 'index'])->name('kyc.index');
+    Route::get('/company/kyc/submit', [KycController::class, 'form'])->name('kyc.form');
+    Route::post('/company/kyc/submit', [KycController::class, 'submit'])->name('kyc.submit');
+    Route::post('/company/kyc/resubmit', [KycController::class, 'resubmit'])->name('kyc.resubmit');
+    Route::post('/company/kyc/documents', [KycController::class, 'storeDocument'])->name('kyc.document.store');
+    Route::get('/company/kyc/documents/{document}/download', [KycController::class, 'download'])->name('kyc.document.download');
+});
+
 Route::view('/company/kyc/owners', 'company.kyc.owners')->name('preview.kyc.owners');
 Route::view('/company/kyc/resubmit', 'company.kyc.resubmit')->name('preview.kyc.resubmit');
 Route::view('/company/kyc/submitted', 'company.kyc.submitted')->name('preview.kyc.submitted');

@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'password', 'timezone'])]
+#[Fillable(['name', 'email', 'password', 'timezone', 'is_platform_admin'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
@@ -68,5 +68,10 @@ class User extends Authenticatable
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_confirmed_at !== null;
+    }
+
+    public function isPlatformAdmin(): bool
+    {
+        return (bool) $this->is_platform_admin;
     }
 }
