@@ -1,9 +1,20 @@
 @php
-    $versions = [
+    $versions = $versions ?? [
         [3, '28 Oct 2026, 16:40 (GMT+7)', 'Aditya Wirawan', 'Volume 8.500 → 8.500 MW, price unchanged'],
         [2, '27 Oct 2026, 11:02 (GMT+7)', 'Aditya Wirawan', 'Price 0.072000 → 0.072500 USD/kWh'],
         [1, '26 Oct 2026, 09:15 (GMT+7)', 'Aditya Wirawan', 'Created as draft'],
     ];
+
+    if (isset($listing) && $listing->histories->isNotEmpty()) {
+        $versions = $listing->histories->map(function ($h) {
+            return [
+                $h->version,
+                $h->created_at->format('d M Y, H:i (e)'),
+                $h->changedBy->name ?? 'User',
+                'Version ' . $h->version . ' snapshot recorded',
+            ];
+        });
+    }
 @endphp
 
 <x-layouts.company title="Listing detail" kyc="APPROVED">
@@ -12,44 +23,57 @@
         <nav class="text-[12px] text-ink-500" aria-label="Breadcrumb">
             <a href="/company/listings" class="hover:text-ink-700">My listings</a>
             <span aria-hidden="true"> / </span>
-            <span class="text-ink-700">Sumba 20 MW Solar Farm — Phase 1</span>
+            <span class="text-ink-700">{{ $listing->location ?? 'Sumba 20 MW Solar Farm — Phase 1' }}</span>
         </nav>
 
         <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
             <div>
-                <h2 class="text-[20px] font-semibold">Sumba 20 MW Solar Farm — Phase 1</h2>
-                <p class="mt-1 text-[13px] text-ink-600">Solar energy · East Sumba, East Nusa Tenggara · Indonesia</p>
+                <h2 class="text-[20px] font-semibold">{{ $listing->location ?? 'Sumba 20 MW Solar Farm — Phase 1' }}</h2>
+                <p class="mt-1 text-[13px] text-ink-600">
+                    {{ isset($listing) && $listing->type === 'carbon_credit' ? 'Carbon credit' : 'Solar energy' }} · East Sumba, East Nusa Tenggara · Indonesia
+                </p>
             </div>
             <div class="flex items-center gap-2">
-                <x-status-badge status="PENDING_REVIEW" />
+                <x-status-badge :status="$listing->status ?? 'PENDING_REVIEW'" />
                 <a href="/company/listings/1/edit" class="rounded-md border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:bg-ink-50">
                     Edit listing
                 </a>
             </div>
         </div>
 
-        <div class="mt-5 flex gap-1 border-b border-ink-200 text-[13px]">
-            <a href="#" class="border-b-2 border-brand-500 px-3 py-2 font-medium text-brand-700">Overview</a>
-            <a href="#" class="border-b-2 border-transparent px-3 py-2 text-ink-600 hover:text-ink-900">Certificate</a>
-            <a href="#" class="border-b-2 border-transparent px-3 py-2 text-ink-600 hover:text-ink-900">Version history</a>
+        {{-- Tabs --}}
+        <div class="mt-5 flex gap-1 border-b border-ink-200 text-[13px]" id="tab-nav">
+            <button type="button" onclick="switchListingTab('overview')" id="tab-btn-overview"
+                    class="tab-btn border-b-2 border-brand-500 px-3 py-2 font-medium text-brand-700 transition">
+                Overview
+            </button>
+            <button type="button" onclick="switchListingTab('certificate')" id="tab-btn-certificate"
+                    class="tab-btn border-b-2 border-transparent px-3 py-2 text-ink-600 hover:text-ink-900 transition">
+                Certificate
+            </button>
+            <button type="button" onclick="switchListingTab('version-history')" id="tab-btn-version-history"
+                    class="tab-btn border-b-2 border-transparent px-3 py-2 text-ink-600 hover:text-ink-900 transition">
+                Version history
+            </button>
         </div>
 
         <div class="mt-5 grid gap-5 lg:grid-cols-[1fr_320px]">
 
             <div class="space-y-5">
-                <section class="rounded-lg border border-ink-200 bg-white p-5">
+                {{-- Pane 1: Overview --}}
+                <section id="tab-overview" class="listing-tab-pane rounded-lg border border-ink-200 bg-white p-5">
                     <h3 class="text-[15px] font-semibold">Listing details</h3>
                     <dl class="mt-3 grid gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2">
                         @foreach ([
-                            ['Type', 'Solar energy'],
-                            ['Installed capacity', '20.000 MW'],
-                            ['Volume available', '8.500 MW'],
-                            ['Price', 'USD 0.072500 / kWh'],
+                            ['Type', isset($listing) && $listing->type === 'carbon_credit' ? 'Carbon credits' : 'Solar energy'],
+                            ['Installed capacity', isset($listing) && $listing->capacity_mw ? ($listing->capacity_mw . ' MW') : '20.000 MW'],
+                            ['Volume available', isset($listing) && $listing->volume_available_mw ? ($listing->volume_available_mw . ' MW') : '8.500 MW'],
+                            ['Price', isset($listing) && $listing->price_per_kwh ? ('USD ' . $listing->price_per_kwh . ' / kWh') : 'USD 0.072500 / kWh'],
                             ['Annual escalation', '0% (fixed)'],
-                            ['Contract duration', '20 years'],
-                            ['Commercial operation', '1 Mar 2027'],
+                            ['Contract duration', isset($listing) && $listing->duration_years ? ($listing->duration_years . ' years') : '20 years'],
+                            ['Commercial operation', isset($listing) && $listing->start_date ? $listing->start_date : '1 Mar 2027'],
                             ['Listing expires', '30 Sep 2027'],
-                            ['Project permit', '541/PLTS/2026'],
+                            ['Project permit', isset($listing) && $listing->permit_reference ? $listing->permit_reference : '541/PLTS/2026'],
                             ['Operating status', 'Operating'],
                         ] as [$label, $value])
                             <div class="flex justify-between gap-4 border-b border-ink-100 pb-2">
@@ -60,24 +84,24 @@
                     </dl>
                 </section>
 
-                {{-- Certificate (FR-11) --}}
-                <section class="rounded-lg border border-ink-200 bg-white p-5">
+                {{-- Pane 2: Certificate (FR-11) --}}
+                <section id="tab-certificate" class="listing-tab-pane hidden rounded-lg border border-ink-200 bg-white p-5">
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <h3 class="text-[15px] font-semibold">Certificate</h3>
                             <p class="mt-1 text-[12px] text-ink-500">A listing cannot become active until the serial is verified.</p>
                         </div>
-                        <x-status-badge status="PENDING_REVIEW" label="Awaiting review" />
+                        <x-status-badge :status="$listing->certificate->status ?? 'PENDING_REVIEW'" :label="$listing->certificate->status ?? 'Awaiting review'" />
                     </div>
 
                     <dl class="mt-4 grid gap-3 text-[13px] sm:grid-cols-2">
                         <div>
                             <dt class="text-[12px] text-ink-500">Registry</dt>
-                            <dd class="mt-0.5 font-medium">I-REC</dd>
+                            <dd class="mt-0.5 font-medium">{{ $listing->certificate->registry ?? 'I-REC' }}</dd>
                         </div>
                         <div>
                             <dt class="text-[12px] text-ink-500">Serial number</dt>
-                            <dd class="mt-0.5 font-mono text-[12px]">IRECID-2027000123 (normalised)</dd>
+                            <dd class="mt-0.5 font-mono text-[12px]">{{ $listing->certificate->serial_normalized ?? 'IRECID-2027000123 (normalised)' }}</dd>
                         </div>
                     </dl>
 
@@ -98,7 +122,8 @@
                     </div>
                 </section>
 
-                <section class="overflow-hidden rounded-lg border border-ink-200 bg-white">
+                {{-- Pane 3: Version history --}}
+                <section id="tab-version-history" class="listing-tab-pane hidden overflow-hidden rounded-lg border border-ink-200 bg-white">
                     <div class="border-b border-ink-200 px-5 py-3">
                         <h3 class="text-[15px] font-semibold">Version history</h3>
                     </div>
@@ -157,4 +182,36 @@
             </aside>
         </div>
     </div>
+
+    <script>
+        function switchListingTab(tabName) {
+            document.querySelectorAll('.listing-tab-pane').forEach(function(el) {
+                el.classList.add('hidden');
+            });
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.classList.remove('border-brand-500', 'text-brand-700', 'font-medium');
+                btn.classList.add('border-transparent', 'text-ink-600');
+            });
+
+            var pane = document.getElementById('tab-' + tabName);
+            var btn = document.getElementById('tab-btn-' + tabName);
+            if (pane) {
+                pane.classList.remove('hidden');
+            }
+            if (btn) {
+                btn.classList.remove('border-transparent', 'text-ink-600');
+                btn.classList.add('border-brand-500', 'text-brand-700', 'font-medium');
+            }
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, '#' + tabName);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var hash = window.location.hash ? window.location.hash.substring(1) : 'overview';
+            if (['overview', 'certificate', 'version-history'].indexOf(hash) !== -1) {
+                switchListingTab(hash);
+            }
+        });
+    </script>
 </x-layouts.company>
