@@ -1,58 +1,111 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GreenGrid APAC — B2B Clean Energy & Carbon Marketplace
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+GreenGrid APAC adalah marketplace B2B lintas negara untuk energi surya dan kredit karbon di Asia Tenggara (Singapura, Malaysia, Indonesia, Vietnam, dan Laos). Platform memfasilitasi verifikasi KYC perusahaan, pembuatan listing energi dan kredit karbon, moderasi admin, verifikasi sertifikat registri (I-REC, VERRA, Gold Standard), dan pencarian marketplace.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Persyaratan Sistem
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.3+
+- Composer
+- MariaDB / MySQL 8
+- Node.js & npm (untuk aset Tailwind)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Cara Menjalankan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. **Install dependensi PHP & aset:**
+   ```bash
+   composer install
+   npm install && npm run build
+   ```
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2. **Konfigurasi Environment:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   Pastikan konfigurasi koneksi database di `.env` sudah sesuai (misal: MySQL/MariaDB database `greengrid`).
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+3. **Migrasi dan Seed Data Demo:**
+   ```bash
+   php artisan migrate --seed
+   ```
+   *(Demo seeder akan otomatis aktif pada environment `local`)*.
 
-## Agentic Development
+4. **Jalankan Aplikasi:**
+   ```bash
+   php artisan serve
+   ```
+   Aplikasi dapat diakses di `http://localhost:8000`.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
+## Cara Membuat Admin Baru
+
+Untuk membuat akun `platform_admin` baru melalui CLI interaktif:
 ```bash
-composer require laravel/boost --dev
+php artisan greengrid:create-admin admin@domain.com
+```
+Perintah akan meminta input kata sandi (minimal 12 karakter) secara aman dan mencatatnya ke audit log.
 
-php artisan boost:install
+---
+
+## Menjalankan Pengujian (Testing)
+
+GreenGrid APAC menggunakan suite pengujian Pest:
+```bash
+# Menjalankan seluruh test suite
+./vendor/bin/pest
+
+# Menjalankan ringkas
+./vendor/bin/pest --compact
+
+# Menjalankan file tes tertentu
+./vendor/bin/pest tests/Feature/DemoSeederTest.php
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## Daftar Akun Demo (Hanya untuk Lingkungan Local)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Semua akun demo di bawah ini menggunakan kata sandi:
+```
+Password1234!
+```
+*(Catatan: Akun demo telah diset dengan 2FA terkonfirmasi)*.
 
-## Code of Conduct
+| Email | Peran / Pengguna | Perusahaan | Status / Keterangan |
+| --- | --- | --- | --- |
+| `admin1@greengrid.test` | Platform Admin 1 | GreenGrid Admin | Rani Kusuma (Admin Utama) |
+| `admin2@greengrid.test` | Platform Admin 2 | GreenGrid Admin | Bima Pratama (Admin Kedua untuk Four-Eyes Rule) |
+| `seller.admin@nusantara-solar.test` | Company Admin | PT Nusantara Solar Prima | Penjual, KYC APPROVED |
+| `seller.procure@nusantara-solar.test` | Procurement | PT Nusantara Solar Prima | Penjual, KYC APPROVED |
+| `buyer.admin@singaporedc.test` | Company Admin | Singapore Data Centers Pte Ltd | Pembeli, KYC APPROVED |
+| `pending.admin@mekong-solar.test` | Company Admin | Mekong Renewables Co., Ltd | KYC PENDING_VERIFICATION (Antrean Admin) |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## Alur Uji Manual 6 Langkah
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. **Registrasi Akun Baru (`/register`):**
+   - Buka `/register`, daftarkan akun baru dengan password minimal 12 karakter.
+   - Selesaikan pembuatan profil perusahaan, lalu selesaikan aktivasi 2FA TOTP di `/two-factor-setup`.
+2. **Pengajuan Verifikasi KYC (`/company/kyc`):**
+   - Masuk ke dashboard perusahaan, buka menu KYC Verification.
+   - Unggah dokumen legal per negara (NIB/SSM/ACRA) serta dokumen identitas direktur, lalu klik submit.
+3. **Verifikasi KYC oleh Admin (`/admin/kyc`):**
+   - Login sebagai `admin1@greengrid.test`.
+   - Buka menu KYC Queue, periksa batas waktu SLA (72 jam), lalu setujui pengajuan KYC perusahaan.
+4. **Pembuatan Listing Penjual (`/listings/create`):**
+   - Login sebagai `seller.admin@nusantara-solar.test` atau `seller.procure@nusantara-solar.test`.
+   - Buat listing baru (Solar Energy atau Carbon Credit) dengan mengisi kapasitas, harga, durasi, dan nomor seri. Listing tersimpan sebagai `DRAFT` / `PENDING_REVIEW`.
+5. **Verifikasi Sertifikat & Aktivasi Listing (`/admin/certificates` & `/admin/listings`):**
+   - Login sebagai platform admin.
+   - Buka `/admin/certificates`, verifikasi keunikan nomor seri registri (VERRA/Gold Standard), lalu setujui.
+   - Di `/admin/listings`, listing kini dapat diaktifkan menjadi status `ACTIVE`.
+6. **Pencarian dan Filter Marketplace (`/listings`):**
+   - Login sebagai pembeli `buyer.admin@singaporedc.test`.
+   - Buka `/listings` (Browse Marketplace).
+   - Uji filter berdasarkan jenis aset (Solar Energy / Carbon Credit), negara, kapasitas minimum MW, harga maksimum, dan durasi tahun.
