@@ -9,7 +9,7 @@ class ListingPolicy
 {
     public function create(User $user, Company $company): bool
     {
-        if (! $company->isApproved()) {
+        if (! $company->isApproved() || $company->company_role !== 'seller') {
             return false;
         }
 
@@ -21,7 +21,7 @@ class ListingPolicy
 
     public function update(User $user, Company $company): bool
     {
-        if (! $company->isApproved()) {
+        if (! $company->isApproved() || $company->company_role !== 'seller') {
             return false;
         }
 
