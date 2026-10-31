@@ -6,4 +6,80 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand: green energy */
+    --color-brand-50: #eaf6ef;
+    --color-brand-100: #d0ebdc;
+    --color-brand-200: #a6d8bd;
+    --color-brand-300: #6fbf97;
+    --color-brand-400: #3ea477;
+    --color-brand-500: #1e8a5f;
+    --color-brand-600: #147048;
+    --color-brand-700: #0f5738;
+    --color-brand-800: #0b422b;
+    --color-brand-900: #072d1d;
+
+    /* Neutral */
+    --color-ink-50: #f8faf9;
+    --color-ink-100: #f1f4f3;
+    --color-ink-200: #e3e8e6;
+    --color-ink-300: #cbd3d0;
+    --color-ink-400: #9aa6a2;
+    --color-ink-500: #6b7773;
+    --color-ink-600: #4c5653;
+    --color-ink-700: #333b39;
+    --color-ink-800: #1f2523;
+    --color-ink-900: #111614;
+
+    /* Semantic */
+    --color-success: #147048;
+    --color-success-soft: #e7f3ec;
+    --color-warning: #b45309;
+    --color-warning-soft: #fdf1e3;
+    --color-danger: #b42318;
+    --color-danger-soft: #fdeceb;
+    --color-info: #1d4ed8;
+    --color-info-soft: #eaeffd;
+    --color-muted: #6b7773;
+    --color-muted-soft: #f1f4f3;
+
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+
+    /* Layout */
+    --spacing-sidebar: 240px;
+    --container-content: 1120px;
+    --container-admin: 1280px;
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-ink-50 text-ink-900 antialiased;
+    }
+
+    /* Visible focus everywhere (WCAG 2.1 AA) */
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-brand-500;
+    }
+
+    /* Numeric columns in tables and prices */
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }
