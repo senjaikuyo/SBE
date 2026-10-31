@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorSetupController;
@@ -113,8 +114,9 @@ Route::view('/company/listings/create/carbon', 'company.listings.create-carbon')
 Route::view('/company/listings/{id}/edit', 'company.listings.edit')->name('preview.listings.edit');
 Route::view('/company/listings/{id}', 'company.listings.show')->name('preview.listings.show');
 
-Route::view('/listings', 'marketplace.index')->name('preview.marketplace.index');
+Route::get('/listings', [MarketplaceController::class, 'index'])->name('marketplace.index');
 Route::view('/listings/empty', 'marketplace.empty')->name('preview.marketplace.empty');
+Route::get('/listings/{listing}', [MarketplaceController::class, 'show'])->name('marketplace.show');
 
 Route::view('/admin', 'admin.overview')->name('preview.admin.overview');
 Route::view('/admin/kyc', 'admin.kyc.index')->name('preview.admin.kyc.index');

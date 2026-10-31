@@ -16,7 +16,6 @@ it('renders every remaining design mockup screen', function (string $uri) {
     '/company/listings/create/carbon',
     '/company/listings/1',
     '/company/listings/1/edit',
-    '/listings',
     '/listings/empty',
     '/admin',
     '/admin/kyc',

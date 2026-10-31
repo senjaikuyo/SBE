@@ -1,12 +1,3 @@
-@php
-    $results = [
-        ['Sumba 20 MW Solar Farm — Phase 1', 'energy', 'Indonesia', '8.500 MW', 'USD 0.072500 / kWh', '20 years', 'Operating'],
-        ['Johor Solar Park 15 MW', 'energy', 'Malaysia', '15.000 MW', 'USD 0.078000 / kWh', '18 years', 'Operating'],
-        ['Mekong Floating Solar 12 MW', 'energy', 'Vietnam', '12.000 MW', 'USD 0.069000 / kWh', '15 years', 'Pre-operational'],
-        ['Aceh Coastal Solar', 'energy', 'Indonesia', '4.000 MW', 'USD 0.069500 / kWh', '15 years', 'Operating'],
-    ];
-@endphp
-
 <x-layouts.company title="Browse marketplace" kyc="APPROVED">
     <div>
         <h2 class="text-[20px] font-semibold">Browse marketplace</h2>
@@ -71,45 +62,50 @@
         </form>
 
         <div class="mt-4 flex items-center justify-between text-[12px] text-ink-500">
-            <p><span class="font-medium text-ink-700 tabular">4</span> listings match your filters</p>
+            <p><span class="font-medium text-ink-700 tabular">{{ $results->count() }}</span> listings match your filters</p>
             <p>Sorted by: newest first</p>
         </div>
 
         {{-- Results --}}
         <ul class="mt-3 space-y-3">
-            @foreach ($results as [$title, $type, $country, $volume, $price, $duration, $operating])
+            @foreach ($results as $listing)
                 <li>
-                    <a href="#" class="block rounded-lg border border-ink-200 bg-white p-4 hover:border-brand-300 hover:bg-brand-50/30">
+                    <a href="{{ route('marketplace.show', $listing) }}" class="block rounded-lg border border-ink-200 bg-white p-4 hover:border-brand-300 hover:bg-brand-50/30">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <h3 class="text-[15px] font-semibold">{{ $title }}</h3>
-                                    @if ($operating === 'Pre-operational')
-                                        <span class="rounded-sm bg-warning-soft px-1.5 py-0.5 text-[11px] font-medium text-warning">Pre-operational</span>
-                                    @endif
+                                    <h3 class="text-[15px] font-semibold">{{ $listing->location }}</h3>
+                                    <span class="rounded-md border border-ink-300 px-3 py-1.5 text-[12px] font-medium text-ink-700">{{ ucfirst($listing->type) }}</span>
                                 </div>
-                                <p class="mt-0.5 text-[12px] text-ink-500">{{ $country }} · Solar energy</p>
+                                <p class="mt-0.5 text-[12px] text-ink-500">{{ $listing->company->name }}</p>
                             </div>
                             <span class="rounded-md border border-ink-300 px-3 py-1.5 text-[12px] font-medium text-ink-700">View listing</span>
                         </div>
 
                         <dl class="mt-4 grid grid-cols-2 gap-4 border-t border-ink-100 pt-3 text-[13px] sm:grid-cols-4">
-                            <div>
-                                <dt class="text-[11px] uppercase tracking-wide text-ink-500">Available</dt>
-                                <dd class="font-medium tabular">{{ $volume }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-[11px] uppercase tracking-wide text-ink-500">Price</dt>
-                                <dd class="font-medium tabular">{{ $price }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-[11px] uppercase tracking-wide text-ink-500">Duration</dt>
-                                <dd class="font-medium tabular">{{ $duration }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-[11px] uppercase tracking-wide text-ink-500">Status</dt>
-                                <dd class="font-medium">{{ $operating }}</dd>
-                            </div>
+                            @if ($listing->type === 'energy')
+                                <div>
+                                    <dt class="text-[11px] uppercase tracking-wide text-ink-500">Available</dt>
+                                    <dd class="font-medium tabular">{{ $listing->volume_available_mw }} MW</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[11px] uppercase tracking-wide text-ink-500">Price</dt>
+                                    <dd class="font-medium tabular">{{ $listing->price_per_kwh }} USD / kWh</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[11px] uppercase tracking-wide text-ink-500">Duration</dt>
+                                    <dd class="font-medium tabular">{{ $listing->duration_years }} years</dd>
+                                </div>
+                            @else
+                                <div>
+                                    <dt class="text-[11px] uppercase tracking-wide text-ink-500">Quantity</dt>
+                                    <dd class="font-medium tabular">{{ $listing->quantity_tco2e }} tCO2e</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[11px] uppercase tracking-wide text-ink-500">Price</dt>
+                                    <dd class="font-medium tabular">{{ $listing->price_per_ton }} USD / ton</dd>
+                                </div>
+                            @endif
                         </dl>
                     </a>
                 </li>

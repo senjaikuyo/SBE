@@ -46,6 +46,15 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 - Buat listing wajib field per tipe; error menyebut field wajib.
 - Hanya perusahaan KYC APPROVED + membership admin/procurement boleh membuat.
 
+### 2026-10-31 — FR-04 pencarian dan detail listing
+
+- Daftar `GET /listings` (`marketplace.index`): hanya listing `ACTIVE`, order newest.
+- Detail `GET /listings/{listing}` (`marketplace.show`): 404 bila status bukan `ACTIVE`; 403 bila perusahaan pemilik tidak KYC APPROVED.
+- Detail tipe `energy`: capacity_mw, volume_available_mw, price_per_kwh, duration_years, start_date, location, permit_reference.
+- Detail tipe `carbon_credit`: quantity_tco2e, vintage, registry_standard, serial_number, price_per_ton. Tipe carbon tidak menampilkan field MW.
+- Empty state: tombol save search dan notifikasi nonaktif dengan keterangan Phase 2 (defer sesuai PRD).
+- Form filter dari mockup: markup awal, query filter nyata belum dikerjakan (tunda ke FR berikutnya).
+
 ## TODO yang menunggu keputusan
 
 - FR-12: catat aksi KYC, listing, sertifikat, dan admin saat FR terkait dikerjakan.
