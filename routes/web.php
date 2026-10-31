@@ -128,6 +128,10 @@ Route::post('/admin/listings/{listing}/approve', [AdminCertificateController::cl
     ->middleware(['auth', 'can:manage,App\\Models\\User'])
     ->name('admin.listings.approve');
 
+Route::post('/admin/listings/{listing}/reject', [AdminCertificateController::class, 'rejectListing'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.listings.reject');
+
 /*
 |--------------------------------------------------------------------------
 | Design previews for screens not implemented yet

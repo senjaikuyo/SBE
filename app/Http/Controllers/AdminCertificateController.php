@@ -6,6 +6,9 @@ use App\Models\Certificate;
 use App\Models\Listing;
 use App\Models\User;
 use App\Support\AuditLogger;
+use App\Mail\ListingApprovedMail;
+use App\Mail\ListingRejectedMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -167,6 +170,43 @@ class AdminCertificateController extends Controller
             actor: $request->user(),
         );
 
+        try {
+            foreach ($listing->company->users as $u) {
+                Mail::to($u)->queue(new ListingApprovedMail($listing));
+            }
+        } catch (\Throwable $e) {
+            // Email service failure does not fail main action
+        }
+
         return back()->with('status', 'Listing activated.');
+    }
+
+    public function rejectListing(Request $request, Listing $listing): RedirectResponse
+    {
+        $this->authorize('manage', User::class);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+
+        $listing->update(['status' => 'REJECTED']);
+
+        $this->audit->record(
+            action: 'listing.rejected',
+            entity: 'listing',
+            entityId: (string) $listing->id,
+            actor: $request->user(),
+            reason: $validated['reason'],
+        );
+
+        try {
+            foreach ($listing->company->users as $u) {
+                Mail::to($u)->queue(new ListingRejectedMail($listing, $validated['reason']));
+            }
+        } catch (\Throwable $e) {
+            // Email service failure does not fail main action
+        }
+
+        return back()->with('status', 'Listing rejected.');
     }
 }
