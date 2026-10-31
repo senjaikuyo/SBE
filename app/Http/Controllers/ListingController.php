@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Certificate;
 use App\Models\Company;
 use App\Models\Listing;
 use App\Policies\ListingPolicy;
@@ -9,6 +10,7 @@ use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ListingController extends Controller
@@ -65,6 +67,13 @@ class ListingController extends Controller
                 'serial_number' => ['required', 'string', 'max:255', 'unique:listings,serial_number'],
                 'price_per_ton' => ['required', 'numeric', 'min:0'],
             ]);
+
+            $normalized = Certificate::normalizeSerial($carbon['serial_number']);
+            if (Certificate::where('registry', $carbon['registry_standard'])->where('serial_normalized', $normalized)->exists()) {
+                throw ValidationException::withMessages([
+                    'serial_number' => 'The serial number is already in use for this registry.',
+                ]);
+            }
         }
 
         $attributes = [
@@ -92,6 +101,16 @@ class ListingController extends Controller
         }
 
         $listing = Listing::create($attributes);
+
+        if ($listing->type === 'carbon_credit' && ! empty($listing->serial_number)) {
+            $listing->certificates()->create([
+                'type' => 'carbon_credit',
+                'registry' => $listing->registry_standard,
+                'serial_number' => $listing->serial_number,
+                'serial_normalized' => Certificate::normalizeSerial($listing->serial_number),
+                'status' => 'PENDING_REVIEW',
+            ]);
+        }
 
         $this->audit->record(
             action: 'listing.created',

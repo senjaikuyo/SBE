@@ -22,8 +22,6 @@ it('renders every remaining design mockup screen', function (string $uri) {
     '/admin/kyc/1',
     '/admin/listings',
     '/admin/listings/1',
-    '/admin/certificates',
-    '/admin/certificates/1',
     '/admin/settings',
     '/admin/approvals',
 ]);

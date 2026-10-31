@@ -1,10 +1,18 @@
 @php
-    $rows = [
-        ['IRECID-2027000457', 'I-REC', 'Sumba 20 MW — Phase 2', 'Nusantara Solar Prima', '1 d ago', 'PENDING_REVIEW'],
-        ['VCS-1520-2025-001234', 'VERRA', 'Riau Biomass Carbon 2025', 'Nusantara Solar Prima', '2 d ago', 'PENDING_REVIEW'],
-        ['GS-88231-2024-77', 'GOLD_STANDARD', 'Kalimantan Reforestation 2024', 'Andalan Solar', '3 d ago', 'PENDING_REVIEW'],
-        ['IRECID-2027000123', 'I-REC', 'Sumba 20 MW — Phase 1', 'Nusantara Solar Prima', '5 d ago', 'VALID'],
-        ['VCS-1520-2025-000981', 'VERRA', 'Sumatra Peat 2025', 'Mekong Renewables', '6 d ago', 'REJECTED'],
+    $rows = isset($certificates) ? $certificates->map(fn ($c) => [
+        $c->serial_normalized,
+        $c->registry,
+        $c->listing?->type === 'energy' ? 'Energy Listing #' . $c->listing_id : 'Carbon Credit #' . $c->listing_id,
+        $c->listing?->company?->name ?? 'Unknown Company',
+        $c->created_at?->diffForHumans() ?? 'just now',
+        $c->status,
+        $c->id,
+    ])->toArray() : [
+        ['IRECID-2027000457', 'I-REC', 'Sumba 20 MW — Phase 2', 'Nusantara Solar Prima', '1 d ago', 'PENDING_REVIEW', 1],
+        ['VCS-1520-2025-001234', 'VERRA', 'Riau Biomass Carbon 2025', 'Nusantara Solar Prima', '2 d ago', 'PENDING_REVIEW', 2],
+        ['GS-88231-2024-77', 'GOLD_STANDARD', 'Kalimantan Reforestation 2024', 'Andalan Solar', '3 d ago', 'PENDING_REVIEW', 3],
+        ['IRECID-2027000123', 'I-REC', 'Sumba 20 MW — Phase 1', 'Nusantara Solar Prima', '5 d ago', 'VALID', 4],
+        ['VCS-1520-2025-000981', 'VERRA', 'Sumatra Peat 2025', 'Mekong Renewables', '6 d ago', 'REJECTED', 5],
     ];
 @endphp
 
@@ -36,7 +44,11 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($rows as [$serial, $registry, $listing, $seller, $submitted, $status])
+                @foreach ($rows as $row)
+                    @php
+                        [$serial, $registry, $listing, $seller, $submitted, $status] = $row;
+                        $certId = $row[6] ?? 1;
+                    @endphp
                     <tr class="border-b border-ink-200 last:border-b-0 hover:bg-ink-50">
                         <td class="px-4 py-3 font-mono text-[12px] font-medium">{{ $serial }}</td>
                         <td class="px-4 py-3 text-ink-600">{{ $registry }}</td>
@@ -47,7 +59,7 @@
                         <td class="px-4 py-3 text-ink-600">{{ $submitted }}</td>
                         <td class="px-4 py-3"><x-status-badge :status="$status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="/admin/certificates/1" class="rounded-md border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:bg-ink-50">
+                            <a href="/admin/certificates/{{ $certId }}" class="rounded-md border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:bg-ink-50">
                                 {{ $status === 'PENDING_REVIEW' ? 'Review' : 'View' }}
                             </a>
                         </td>

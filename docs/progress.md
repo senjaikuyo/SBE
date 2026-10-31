@@ -10,10 +10,9 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 | FR-12 | Sebagian | Tabel, hash berantai, penjagaan model + trigger MySQL, `audit:verify` selesai. Aksi KYC, listing, sertifikat, admin menyusul di FR terkait. |
 | FR-02 | Selesai | Submit verifikasi (buyer/seller, dokumen per negara + shared, expiry, screening stub, email queue), resubmit dari REJECTED, tolak submit PENDING/APPROVED, admin approve/reject alasan wajib + email, upload dokumen ≤10MB + mimetypes, VirusScanner stub, screening 90 hari, `greengrid:create-admin`. |
 | FR-03 | Selesai | Listing seller: tabel `listings` (energy/carbon_credit), create dengan field wajib per tipe, status DRAFT, version 1. |
+| FR-04 | Selesai | Marketplace listing list dan detail pages, hanya tampilkan status ACTIVE, proteksi KYC perusahaan penjual. |
+| FR-11 | Selesai | Verifikasi manual sertifikat oleh platform_admin: antrean, setujui (listing ACTIVE), tolak wajib alasan (listing REJECTED), serial unik per registry, audit log, proteksi status ACTIVE (FR-03 butir 5). |
 | FR-05 | Belum | |
-| FR-03 | Belum | |
-| FR-11 | Belum | |
-| FR-04 | Belum | |
 | FR-06 | Belum | |
 
 ## Riwayat
@@ -54,6 +53,16 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 - Detail tipe `carbon_credit`: quantity_tco2e, vintage, registry_standard, serial_number, price_per_ton. Tipe carbon tidak menampilkan field MW.
 - Empty state: tombol save search dan notifikasi nonaktif dengan keterangan Phase 2 (defer sesuai PRD).
 - Form filter dari mockup: markup awal, query filter nyata belum dikerjakan (tunda ke FR berikutnya).
+
+### 2026-10-31 — FR-11 verifikasi sertifikat (manual)
+
+- Tabel `certificates`: relasi ke listing, type, registry, serial_number, serial_normalized, status (`PENDING_REVIEW`, `VALID`, `REJECTED`), rejection_reason, note, reviewed_by, reviewed_at, serta unique constraint `[registry, serial_normalized]`.
+- Antrean verifikasi admin: `GET /admin/certificates` dan `GET /admin/certificates/queue` diproteksi middleware `auth` dan gate `platform_admin` (`can:manage,App\Models\User`).
+- Persetujuan admin: status sertifikat menjadi `VALID`, listing otomatis diaktifkan menjadi `ACTIVE`, mencatat audit log `certificate.approved` dan `listing.activated`.
+- Penolakan admin: wajib mengisi alasan penolakan (`reason` / `rejection_reason`), status sertifikat menjadi `REJECTED`, status listing menjadi `REJECTED`, mencatat audit log `certificate.rejected` dan `listing.rejected`.
+- Proteksi status ACTIVE (FR-03 butir 5): listing tanpa sertifikat atau dengan sertifikat yang belum diverifikasi admin tidak dapat beralih ke status `ACTIVE` (`canBeActive()`, guard domain exception pada `activate()`, serta validasi di controller approval admin).
+- Otorisasi: non-admin (termasuk company_admin/seller biasa) menerima 403 Forbidden saat mengakses antrean atau endpoint aksi verifikasi.
+- Nomor seri ternormalisasi: pembersihan spasi dan konversi ke huruf besar (`Certificate::normalizeSerial()`) untuk memastikan integritas keunikan nomor seri per registri.
 
 ## TODO yang menunggu keputusan
 

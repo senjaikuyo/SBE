@@ -9,6 +9,7 @@ use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorSetupController;
+use App\Http\Controllers\AdminCertificateController;
 use App\Http\Controllers\AdminKycController;
 use App\Http\Controllers\KycController;
 use Illuminate\Support\Facades\Route;
@@ -87,6 +88,45 @@ Route::post('/admin/kyc/submissions/{kyc}/reject', [AdminKycController::class, '
     ->middleware(['auth', 'can:manage,App\\Models\\User'])
     ->name('kyc.reject');
 
+Route::get('/admin/certificates', [AdminCertificateController::class, 'queue'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.certificates.queue');
+
+Route::get('/admin/certificates/queue', [AdminCertificateController::class, 'queue'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User']);
+
+Route::get('/admin/certificates/{certificate}', [AdminCertificateController::class, 'show'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.certificates.show');
+
+Route::post('/admin/certificates/{certificate}/approve', [AdminCertificateController::class, 'approve'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('certificates.approve');
+
+Route::post('/admin/certificates/{certificate}/approve-admin', [AdminCertificateController::class, 'approve'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.certificates.approve');
+
+Route::post('/admin/certificates/{certificate}/reject', [AdminCertificateController::class, 'reject'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('certificates.reject');
+
+Route::post('/admin/certificates/{certificate}/reject-admin', [AdminCertificateController::class, 'reject'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.certificates.reject');
+
+Route::post('/admin/certificates/{certificate}/decision', [AdminCertificateController::class, 'decision'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('certificates.decision');
+
+Route::post('/admin/certificates/{certificate}/decision-admin', [AdminCertificateController::class, 'decision'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.certificates.decision');
+
+Route::post('/admin/listings/{listing}/approve', [AdminCertificateController::class, 'approveListing'])
+    ->middleware(['auth', 'can:manage,App\\Models\\User'])
+    ->name('admin.listings.approve');
+
 /*
 |--------------------------------------------------------------------------
 | Design previews for screens not implemented yet
@@ -123,7 +163,5 @@ Route::view('/admin/kyc', 'admin.kyc.index')->name('preview.admin.kyc.index');
 Route::view('/admin/kyc/{id}', 'admin.kyc.show')->name('preview.admin.kyc.show');
 Route::view('/admin/listings', 'admin.listings.index')->name('preview.admin.listings.index');
 Route::view('/admin/listings/{id}', 'admin.listings.show')->name('preview.admin.listings.show');
-Route::view('/admin/certificates', 'admin.certificates.index')->name('preview.admin.certificates.index');
-Route::view('/admin/certificates/{id}', 'admin.certificates.show')->name('preview.admin.certificates.show');
 Route::view('/admin/settings', 'admin.settings')->name('preview.admin.settings');
 Route::view('/admin/approvals', 'admin.approvals.index')->name('preview.admin.approvals.index');
