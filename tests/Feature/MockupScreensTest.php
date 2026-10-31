@@ -1,24 +1,12 @@
 <?php
 
-it('renders every design mockup screen', function (string $uri) {
+it('renders every remaining design mockup screen', function (string $uri) {
     $this->get($uri)->assertOk();
 })->with([
     '/',
-    '/register',
-    '/register/company',
-    '/login',
-    '/forgot-password',
-    '/reset-password/example-token',
     '/privacy',
     '/terms',
-    '/invitations/example-token',
     '/invitations/expired',
-    '/two-factor-setup',
-    '/two-factor-challenge',
-    '/dashboard',
-    '/profile',
-    '/company/members',
-    '/company/members/invite',
     '/company/kyc',
     '/company/kyc/submit',
     '/company/kyc/owners',

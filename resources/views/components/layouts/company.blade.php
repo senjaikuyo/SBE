@@ -1,12 +1,19 @@
-@props(['title' => null, 'company' => 'Nusantara Solar Prima', 'kyc' => 'NOT_SUBMITTED'])
+@props(['title' => null, 'company' => null, 'kyc' => null])
 
 @php
+    $user = auth()->user();
+    $activeCompany = $company ?? $user?->company()?->name;
+    $kycStatus = $kyc ?? $user?->company()?->kyc_status ?? 'NOT_SUBMITTED';
+    $role = $user?->company()
+        ? $user->membershipFor($user->company())?->role
+        : null;
+
     $items = [
-        ['label' => 'Dashboard', 'href' => '/dashboard', 'match' => '/dashboard'],
-        ['label' => 'Company members', 'href' => '/company/members', 'match' => '/company/members*'],
-        ['label' => 'KYC verification', 'href' => '/company/kyc', 'match' => '/company/kyc*'],
-        ['label' => 'My listings', 'href' => '/company/listings', 'match' => '/company/listings*'],
-        ['label' => 'Browse marketplace', 'href' => '/listings', 'match' => '/listings*'],
+        ['label' => 'Dashboard', 'href' => '/dashboard', 'match' => 'dashboard'],
+        ['label' => 'Company members', 'href' => '/company/members', 'match' => 'company/members*'],
+        ['label' => 'KYC verification', 'href' => '/company/kyc', 'match' => 'company/kyc*'],
+        ['label' => 'My listings', 'href' => '/company/listings', 'match' => 'company/listings*'],
+        ['label' => 'Browse marketplace', 'href' => '/listings', 'match' => 'listings*'],
     ];
 @endphp
 
@@ -15,6 +22,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ? $title.' · GreenGrid APAC' : 'GreenGrid APAC' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -36,12 +44,12 @@
                 <a href="{{ $item['href'] }}"
                    @class([
                        'flex items-center justify-between rounded-md px-3 py-2 text-sm',
-                       'bg-brand-50 font-medium text-brand-700' => request()->is(ltrim($item['match'], '/')),
-                       'text-ink-700 hover:bg-ink-100' => ! request()->is(ltrim($item['match'], '/')),
+                       'bg-brand-50 font-medium text-brand-700' => request()->is($item['match']),
+                       'text-ink-700 hover:bg-ink-100' => ! request()->is($item['match']),
                    ])
-                   @if (request()->is(ltrim($item['match'], '/'))) aria-current="page" @endif>
+                   @if (request()->is($item['match'])) aria-current="page" @endif>
                     {{ $item['label'] }}
-                    @if ($item['href'] === '/listings' && $kyc !== 'APPROVED')
+                    @if ($item['href'] === '/listings' && $kycStatus !== 'APPROVED')
                         <span class="text-[11px] text-ink-400">locked</span>
                     @endif
                 </a>
@@ -50,9 +58,18 @@
 
         <div class="border-t border-ink-200 p-3">
             <div class="rounded-md bg-ink-50 p-3">
-                <p class="truncate text-[13px] font-medium">{{ $company }}</p>
-                <p class="mt-0.5 text-[12px] text-ink-500">company_admin</p>
+                <p class="truncate text-[13px] font-medium">{{ $activeCompany ?? 'No company yet' }}</p>
+                <p class="mt-0.5 truncate text-[12px] text-ink-500">{{ $role ? ucfirst(str_replace('_', ' ', $role)) : 'Onboarding' }}</p>
             </div>
+
+            @if ($user)
+                <form method="POST" action="/logout" class="mt-2">
+                    @csrf
+                    <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-[13px] text-ink-600 hover:bg-ink-100">
+                        Sign out
+                    </button>
+                </form>
+            @endif
         </div>
     </aside>
 
@@ -63,12 +80,29 @@
                 <h1 class="text-[15px] font-semibold">{{ $title }}</h1>
             </div>
             <div class="flex items-center gap-3">
-                <x-status-badge :status="$kyc" />
-                <span class="hidden text-[13px] text-ink-500 sm:inline">aditya@nusantarasolar.co.id</span>
+                <x-status-badge :status="$kycStatus" />
+                <span class="hidden text-[13px] text-ink-500 sm:inline">{{ $user?->email }}</span>
             </div>
         </header>
 
         <main class="mx-auto w-full max-w-[1120px] flex-1 px-5 py-6 lg:px-8 lg:py-8">
+            @if (session('status'))
+                <div class="mb-5 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-[13px] text-ink-800" role="status">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="mb-5 rounded-md border border-danger/30 bg-danger-soft px-4 py-3" role="alert">
+                    <p class="text-[13px] font-medium text-danger">Please fix the following:</p>
+                    <ul class="mt-1 list-inside list-disc text-[12px] text-ink-700">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{ $slot }}
         </main>
     </div>

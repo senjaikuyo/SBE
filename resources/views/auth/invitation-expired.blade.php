@@ -7,12 +7,10 @@
                     <path d="M12 8v5M12 16h.01" stroke-linecap="round"/>
                 </svg>
             </span>
-            <h1 class="mt-4 text-[20px] font-semibold leading-7">This invitation has expired</h1>
+            <h1 class="mt-4 text-[20px] font-semibold leading-7">This invitation is no longer valid</h1>
             <p class="mt-2 text-[13px] leading-5 text-ink-600">
-                Invitations are valid for 7 days. Ask your company administrator to send a new one.
+                Invitations are valid for {{ config('greengrid.invitation_expiry_days') }} days and can be used once. Ask your company administrator to send a new one.
             </p>
-            <p class="mt-1 text-[12px] text-ink-500">Reference: inv_9f2c1a</p>
-
             <div class="mt-6 flex flex-col gap-2">
                 <a href="/login" class="rounded-md bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600">
                     Go to sign in
@@ -24,7 +22,7 @@
         </div>
 
         <p class="mt-6 text-center text-[12px] leading-5 text-ink-500">
-            A used invitation shows a different message. If you already accepted this one, sign in instead.
+            If you already accepted this invitation, sign in instead.
         </p>
     </div>
 </x-layouts.public>

@@ -6,10 +6,19 @@
             Enter your work email. If an account exists, we will send a reset link that expires in 60 minutes.
         </p>
 
-        <form class="mt-6 space-y-5" novalidate>
+        @if ($errors->any())
+            <div class="mt-4 rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-[13px] text-ink-800" role="alert">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
+        <form method="POST" action="/forgot-password" class="mt-6 space-y-5">
+            @csrf
+
             <div>
                 <label for="email" class="block text-[13px] font-medium">Work email</label>
-                <input id="email" type="email" autocomplete="email" placeholder="you@company.com"
+                <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
+                       autocomplete="email" placeholder="you@company.com"
                        class="mt-1.5 w-full rounded-sm border border-ink-300 bg-white px-3 py-2 text-sm placeholder:text-ink-400 focus:border-brand-500">
             </div>
 

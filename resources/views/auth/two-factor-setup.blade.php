@@ -1,67 +1,51 @@
-@php
-    $codes = ['8F2K-QW7L', 'M4RT-9XZB', 'LC6P-2HVN', 'ZQ1D-5KRS', 'BN8T-4WYG', 'YH3M-7PXC', 'D5LV-6QFA', 'U9JK-0RTE'];
-@endphp
+<x-layouts.public title="Two-factor authentication">
+    <div class="mx-auto max-w-[520px] px-6 py-14">
 
-<x-layouts.public title="Set up two-factor authentication">
-    <div class="mx-auto max-w-[640px] px-6 py-12">
-
-        <div class="rounded-md border border-warning/30 bg-warning-soft px-4 py-3">
-            <p class="text-[13px] font-medium text-warning">Security step required</p>
-            <p class="mt-0.5 text-[12px] leading-5 text-ink-700">
-                Two-factor authentication is required for every account before you can access the marketplace.
-            </p>
-        </div>
-
-        <h1 class="mt-6 text-[24px] font-semibold leading-8">Set up two-factor authentication</h1>
+        <p class="text-[12px] font-medium uppercase tracking-wider text-brand-700">Step 3 of 3</p>
+        <h1 class="mt-2 text-[24px] font-semibold leading-8">Set up two-factor authentication</h1>
         <p class="mt-1 text-[13px] leading-5 text-ink-600">
-            Scan the QR code with an authenticator app such as Google Authenticator, 1Password or Authy.
+            Required for every account. Scan the code with an authenticator app, then enter the 6-digit code.
         </p>
 
-        <div class="mt-6 grid gap-6 sm:grid-cols-[200px_1fr]">
-
-            <div class="grid h-[200px] w-[200px] place-items-center rounded-lg border border-ink-200 bg-white">
-                <div class="grid grid-cols-8 gap-0.5" aria-hidden="true">
-                    @for ($i = 0; $i < 64; $i++)
-                        <span @class(['h-4 w-4', 'bg-ink-900' => ($i * 7) % 3 !== 0, 'bg-white' => ($i * 7) % 3 === 0])></span>
-                    @endfor
-                </div>
-                <span class="sr-only">QR code placeholder for authenticator app</span>
+        @if ($errors->any())
+            <div class="mt-4 rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-[13px] text-ink-800" role="alert">
+                {{ $errors->first() }}
             </div>
+        @endif
 
-            <div class="space-y-4">
-                <div>
-                    <p class="text-[13px] font-medium">Or enter this key manually</p>
-                    <p class="mt-1.5 rounded-sm border border-ink-200 bg-ink-50 px-3 py-2 font-mono text-[13px] tracking-wider">
-                        GRDG 4K2M 9XQ7 LBN3
+        <div class="mt-6 rounded-lg border border-ink-200 bg-white p-5">
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+                <div class="w-[192px] shrink-0 rounded-md border border-ink-200 bg-white p-2 [&>svg]:h-full [&>svg]:w-full">
+                    {!! $qrCodeSvg !!}
+                </div>
+
+                <div class="min-w-0">
+                    <p class="text-[13px] font-medium">Cannot scan?</p>
+                    <p class="mt-1 text-[12px] text-ink-500">Enter this key manually in your app:</p>
+                    <p class="mt-2 break-all rounded-sm bg-ink-50 px-2.5 py-2 font-mono text-[12px] tracking-wide">{{ $secret }}</p>
+                    <p class="mt-3 text-[12px] leading-5 text-ink-500">
+                        Keep this key private. If you lose your device you will need your recovery codes.
                     </p>
                 </div>
-
-                <div>
-                    <label for="code" class="block text-[13px] font-medium">6-digit code from your app</label>
-                    <input id="code" name="code" inputmode="numeric" maxlength="6" placeholder="000000"
-                           class="mt-1.5 w-[160px] rounded-sm border border-ink-300 bg-white px-3 py-2 font-mono text-sm tracking-[0.3em] placeholder:text-ink-300 focus:border-brand-500">
-                </div>
-
-                <button type="submit" class="rounded-md bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600">
-                    Confirm and continue
-                </button>
             </div>
+
+            <form method="POST" action="/two-factor-setup" class="mt-6 border-t border-ink-200 pt-5">
+                @csrf
+
+                <label for="code" class="block text-[13px] font-medium">Authentication code</label>
+                <input id="code" name="code" inputmode="numeric" maxlength="6" required autocomplete="one-time-code" placeholder="000000"
+                       class="mt-1.5 w-[180px] rounded-sm border border-ink-300 bg-white px-3 py-2 font-mono text-sm tracking-[0.3em] placeholder:text-ink-300 focus:border-brand-500"
+                       aria-describedby="code-hint">
+                <p id="code-hint" class="mt-1 text-[12px] text-ink-500">Codes rotate every 30 seconds.</p>
+
+                <button type="submit" class="mt-4 w-full rounded-md bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600">
+                    Turn on two-factor authentication
+                </button>
+            </form>
         </div>
 
-        <section class="mt-8 rounded-lg border border-ink-200 bg-white p-5">
-            <h2 class="text-[15px] font-semibold">Recovery codes</h2>
-            <p class="mt-1 text-[12px] leading-5 text-ink-600">
-                Store these somewhere safe. Each code can be used once if you lose access to your authenticator app.
-            </p>
-            <ul class="mt-3 grid grid-cols-2 gap-1.5 font-mono text-[12px] text-ink-700 sm:grid-cols-4">
-                @foreach ($codes as $code)
-                    <li class="rounded-sm bg-ink-50 px-2 py-1.5 text-center">{{ $code }}</li>
-                @endforeach
-            </ul>
-        </section>
-
-        <p class="mt-6 text-[12px] text-ink-500">
-            You can change this later under Profile → Two-factor authentication.
+        <p class="mt-4 text-[12px] leading-5 text-ink-500">
+            Until this is enabled, only your profile is available. Marketplace, listings and company features stay locked.
         </p>
     </div>
 </x-layouts.public>
