@@ -71,3 +71,36 @@ it('refuses deletes through the model', function () {
     expect(fn () => $log->delete())
         ->toThrow(LogicException::class, 'audit_logs is append-only');
 });
+
+it('records all required categories with reasons and actor IDs', function () {
+    $admin = makeUser(['is_platform_admin' => true]);
+    $logger = app(AuditLogger::class);
+
+    // 1. Role change
+    $logger->record('membership.role_changed', 'membership', '10', 'Promotion to procurement', $admin);
+    // 2. KYC action
+    $logger->record('kyc.approved', 'kyc_submission', '20', 'Documents verified against ACRA', $admin);
+    // 3. Listing action
+    $logger->record('listing.created', 'listing', '30', 'New solar project draft', $admin);
+    // 4. Certificate action
+    $logger->record('certificate.approved', 'certificate', '40', 'Serial checked on Verra registry', $admin);
+    // 5. Admin action
+    $logger->record('admin.approval_approved', 'approval_request', '50', 'Four-eyes approval confirmed', $admin);
+
+    $this->artisan('audit:verify')->assertSuccessful();
+
+    $logs = AuditLog::whereIn('action', [
+        'membership.role_changed',
+        'kyc.approved',
+        'listing.created',
+        'certificate.approved',
+        'admin.approval_approved',
+    ])->get();
+
+    expect($logs)->toHaveCount(5);
+    foreach ($logs as $l) {
+        expect($l->hash)->not->toBeEmpty();
+        expect($l->reason)->not->toBeEmpty();
+        expect($l->actor_id)->toBe($admin->id);
+    }
+});

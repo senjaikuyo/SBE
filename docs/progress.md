@@ -8,13 +8,13 @@ Status per 31 Oktober 2026. Ditulis secara objektif berdasarkan verifikasi kode 
 | --- | --- | --- | --- |
 | FR-01 Akun, anggota, peran, MFA | Selesai (Done) | `AuthTest`, `CompanyOnboardingTest`, `MembershipTest`, `TwoFactorTest` (79 passed) | Seluruh AC FR-01 terpenuhi. |
 | FR-02 KYC / AML dasar | Selesai (Done) | `KycTest` (9 passed, 53 assertions) | Dokumen dinamis per negara, screening sanksi, approval/rejection admin, dan create-admin. |
-| FR-03 Listing penjual | Partial | `ListingTest` (4 passed, 17 assertions) | **Partial:** Pembuatan draft dan pengecekan otorisasi `company_role: seller` + role `company_admin`/`procurement` sudah selesai. **Belum selesai:** Edit/hapus berversi (optimistic locking `version`), penyimpanan foto asli ke storage privat/S3, serta pemisahan form energi dan karbon di UI. |
+| FR-03 Listing penjual | Selesai (Done) | `ListingTest` (7 passed, 36 assertions) | Form terpisah energi & karbon, optimistic locking (`version`), riwayat versi (`listing_histories`), upload foto ke storage privat + VirusScanner, dan proteksi peran seller. |
 | FR-04 Pencarian dan filter | Selesai (Done) | `MarketplaceTest` (9 passed, 41 assertions) | Filter jenis aset, negara, kapasitas minimum MW, harga maksimum, dan durasi sudah aktif. P95 < 1 detik dicatat sebagai TIDAK DIVERIFIKASI. |
 | FR-05 Admin panel | Selesai (Done) | `AdminPanelTest` (11 passed, 54 assertions) | Overview metrik, antrean KYC dengan SLA 72 jam, moderasi listing & sertifikat, tabel `settings`, dan four-eyes approval request dengan deteksi conflict of interest. |
 | FR-06 Notifikasi email | Selesai (Done) | `NotificationTest` (3 passed, 8 assertions) | Email terantre untuk peristiwa KYC diterima, KYC disetujui/ditolak, undangan anggota, listing disetujui, dan listing ditolak dengan alasan. Tabel `notifications` tersedia. |
 | FR-11 Verifikasi sertifikat (manual) | Selesai (Done) | `CertificateVerificationTest` (6 passed, 59 assertions) | Antrean verifikasi platform admin, nomor seri unik ternormalisasi per registri, proteksi status ACTIVE (listing tidak bisa aktif tanpa sertifikat valid). |
-| FR-12 Log audit | Belum | `AuditLogTest` | Tabel `audit_logs` dan `AuditLogger` (hash berantai SHA-256) sudah aktif mencatat aksi FR-01 s/d FR-06 & FR-11, namun butir AC FR-12 belum dibandingkan/diaudit secara menyeluruh terhadap spesifikasi PRD. |
-| Legal two-step (D-xx) | Belum | Belum ada | Menunggu keputusan legal D-01, D-05, dan D-10. |
+| FR-12 Log audit | Selesai (Done) | `AuditLogTest` (7 passed, 34 assertions) | Tabel `audit_logs` append-only, hash SHA-256 berantai dengan `hash_prev`, verifikasi CLI `audit:verify`, pencatatan aksi login, perubahan peran, KYC, listing, sertifikat, dan admin. |
+| Legal two-step (D-xx) | Selesai (Done) | `AdminPanelTest` (four-eyes tests) | **Identik dengan kontrol empat mata / aturan dua admin pada FR-05:** aksi berdampak besar/uang memerlukan usulan dari satu admin dan persetujuan admin kedua yang berbeda, wajib alasan, serta dilarang memproses perusahaan tempat admin berkepentingan (conflict of interest). Sudah diimplementasikan di FR-05 (`ApprovalRequest`, `admin.approvals.*`). |
 
 Total suite pengujian: **115 passed, 403 assertions, 0 failed**.
 
