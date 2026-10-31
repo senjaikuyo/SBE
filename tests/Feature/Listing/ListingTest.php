@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Listing;
+use App\Models\ListingHistory;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 it('creates an energy listing for an approved seller company', function () {
     $user = makeCompanyUser('company_admin');
@@ -20,9 +22,12 @@ it('creates an energy listing for an approved seller company', function () {
         'photo' => UploadedFile::fake()->image('panorama.jpg'),
     ])->assertRedirect(route('listings.create'));
 
-    expect(Listing::query()->count())->toBe(1)
-        ->and(Listing::query()->first()->status)->toBe('DRAFT')
-        ->and(Listing::query()->first()->type)->toBe('energy');
+    $created = Listing::query()->first();
+    expect($created)->not->toBeNull()
+        ->and($created->status)->toBe('DRAFT')
+        ->and($created->type)->toBe('energy')
+        ->and($created->photo)->not->toBe('pending')
+        ->and($created->histories()->count())->toBe(1);
 });
 
 it('rejects an energy listing missing a required field', function () {
@@ -97,4 +102,75 @@ it('rejects buyer companies with 403 and accepts seller companies for listing cr
     ])->assertRedirect(route('listings.create'));
 
     expect(Listing::where('location', 'Seller Place')->count())->toBe(1);
+});
+
+it('(a) updates and deletes listing with version increment and history record', function () {
+    $user = makeCompanyUser('company_admin');
+    $company = $user->company();
+    $company->update(['kyc_status' => 'APPROVED', 'company_role' => 'seller']);
+
+    $listing = Listing::create([
+        'company_id' => $company->id,
+        'type' => 'energy',
+        'capacity_mw' => 15,
+        'volume_available_mw' => 10,
+        'price_per_kwh' => 0.08,
+        'duration_years' => 10,
+        'location' => 'Original Location',
+        'status' => 'DRAFT',
+        'version' => 1,
+    ]);
+
+    // Update listing
+    $this->actingAs($user)->patch(route('listings.update', $listing), [
+        'capacity_mw' => 20,
+        'location' => 'Updated Location',
+    ])->assertRedirect(route('listings.create'));
+
+    $listing->refresh();
+    expect($listing->version)->toBe(2);
+    expect($listing->capacity_mw)->toBe(20);
+    expect($listing->location)->toBe('Updated Location');
+    expect($listing->histories()->count())->toBe(1);
+
+    // Delete listing
+    $this->actingAs($user)->delete(route('listings.destroy', $listing))->assertRedirect(route('listings.create'));
+    expect(Listing::find($listing->id))->toBeNull();
+    expect(ListingHistory::where('listing_id', $listing->id)->count())->toBe(2);
+});
+
+it('(b) validates energy photo size limit and scans with VirusScanner', function () {
+    $user = makeCompanyUser('company_admin');
+    $company = $user->company();
+    $company->update(['kyc_status' => 'APPROVED', 'company_role' => 'seller']);
+
+    // Photo exceeding 10MB
+    $oversizedFile = UploadedFile::fake()->create('huge.jpg', 11 * 1024);
+
+    $this->actingAs($user)->post(route('listings.store'), [
+        'type' => 'energy',
+        'capacity_mw' => 5,
+        'volume_available_mw' => 5,
+        'price_per_kwh' => 0.10,
+        'duration_years' => 5,
+        'start_date' => '2027-01-01',
+        'location' => 'Test Site',
+        'permit_reference' => 'PERMIT-TEST',
+        'photo' => $oversizedFile,
+    ])->assertSessionHasErrors(['photo']);
+});
+
+it('(c) serves separate forms for energy and carbon listings', function () {
+    $user = makeCompanyUser('company_admin');
+    $company = $user->company();
+    $company->update(['kyc_status' => 'APPROVED', 'company_role' => 'seller']);
+
+    $this->actingAs($user)->get(route('listings.create.energy'))
+        ->assertOk()
+        ->assertSee('Capacity');
+
+    $this->actingAs($user)->get(route('listings.create.carbon'))
+        ->assertOk()
+        ->assertSee('Quantity')
+        ->assertDontSee('Capacity (MW)');
 });

@@ -7,8 +7,10 @@ use App\Models\Company;
 use App\Models\Listing;
 use App\Policies\ListingPolicy;
 use App\Support\AuditLogger;
+use App\Support\VirusScanner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -30,6 +32,32 @@ class ListingController extends Controller
         }
 
         return view('listings.create', [
+            'company' => $company,
+        ]);
+    }
+
+    public function createEnergy(Request $request): View
+    {
+        $company = $request->user()->company();
+
+        if (! app(ListingPolicy::class)->create($request->user(), $company)) {
+            abort(403);
+        }
+
+        return view('company.listings.create-energy', [
+            'company' => $company,
+        ]);
+    }
+
+    public function createCarbon(Request $request): View
+    {
+        $company = $request->user()->company();
+
+        if (! app(ListingPolicy::class)->create($request->user(), $company)) {
+            abort(403);
+        }
+
+        return view('company.listings.create-carbon', [
             'company' => $company,
         ]);
     }
@@ -57,7 +85,7 @@ class ListingController extends Controller
                 'start_date' => ['required', 'date'],
                 'location' => ['required', 'string', 'max:255'],
                 'permit_reference' => ['required', 'string', 'max:255'],
-                'photo' => ['required', 'file', 'mimes:jpg,png,pdf'],
+                'photo' => ['required', 'file', 'mimes:jpg,png,pdf', 'max:10240'],
             ]);
         } else {
             $carbon = $request->validate([
@@ -84,6 +112,15 @@ class ListingController extends Controller
         ];
 
         if ($validated['type'] === 'energy') {
+            $file = $request->file('photo');
+            $virus = app(VirusScanner::class)->scan($file->getRealPath() ?: '');
+            if (! ($virus['clean'] ?? false)) {
+                throw ValidationException::withMessages(['photo' => 'File failed virus scan.']);
+            }
+
+            $disk = config('greengrid.files.disk', 'local');
+            $path = Storage::disk($disk)->putFile('listings', $file);
+
             $attributes['capacity_mw'] = $energy['capacity_mw'];
             $attributes['volume_available_mw'] = $energy['volume_available_mw'];
             $attributes['price_per_kwh'] = $energy['price_per_kwh'];
@@ -91,7 +128,7 @@ class ListingController extends Controller
             $attributes['start_date'] = $energy['start_date'];
             $attributes['location'] = $energy['location'];
             $attributes['permit_reference'] = $energy['permit_reference'];
-            $attributes['photo'] = 'pending';
+            $attributes['photo'] = $path;
         } else {
             $attributes['quantity_tco2e'] = $carbon['quantity_tco2e'];
             $attributes['vintage'] = $carbon['vintage'];
@@ -101,6 +138,12 @@ class ListingController extends Controller
         }
 
         $listing = Listing::create($attributes);
+
+        $listing->histories()->create([
+            'version' => 1,
+            'snapshot' => $listing->toArray(),
+            'changed_by_id' => $request->user()->id,
+        ]);
 
         if ($listing->type === 'carbon_credit' && ! empty($listing->serial_number)) {
             $listing->certificates()->create([
@@ -120,5 +163,88 @@ class ListingController extends Controller
         );
 
         return redirect()->route('listings.create')->with('status', 'Listing saved as draft.');
+    }
+
+    public function edit(Request $request, Listing $listing): View
+    {
+        $company = $request->user()->company();
+
+        if ($listing->company_id !== $company->id || ! app(ListingPolicy::class)->update($request->user(), $company)) {
+            abort(403);
+        }
+
+        return view('company.listings.edit', [
+            'listing' => $listing,
+        ]);
+    }
+
+    public function update(Request $request, Listing $listing): RedirectResponse
+    {
+        $company = $request->user()->company();
+
+        if ($listing->company_id !== $company->id || ! app(ListingPolicy::class)->update($request->user(), $company)) {
+            abort(403);
+        }
+
+        // Save previous snapshot in history
+        $listing->histories()->create([
+            'version' => $listing->version,
+            'snapshot' => $listing->toArray(),
+            'changed_by_id' => $request->user()->id,
+        ]);
+
+        if ($listing->type === 'energy') {
+            $data = $request->validate([
+                'capacity_mw' => ['sometimes', 'integer', 'min:0'],
+                'volume_available_mw' => ['sometimes', 'numeric', 'min:0'],
+                'price_per_kwh' => ['sometimes', 'numeric', 'min:0'],
+                'duration_years' => ['sometimes', 'integer', 'min:1'],
+                'location' => ['sometimes', 'string', 'max:255'],
+            ]);
+        } else {
+            $data = $request->validate([
+                'quantity_tco2e' => ['sometimes', 'integer', 'min:1'],
+                'price_per_ton' => ['sometimes', 'numeric', 'min:0'],
+            ]);
+        }
+
+        $data['version'] = $listing->version + 1;
+        $listing->update($data);
+
+        $this->audit->record(
+            action: 'listing.updated',
+            entity: 'listing',
+            entityId: (string) $listing->id,
+            actor: $request->user(),
+        );
+
+        return redirect()->route('listings.create')->with('status', 'Listing updated.');
+    }
+
+    public function destroy(Request $request, Listing $listing): RedirectResponse
+    {
+        $company = $request->user()->company();
+
+        if ($listing->company_id !== $company->id || ! app(ListingPolicy::class)->update($request->user(), $company)) {
+            abort(403);
+        }
+
+        // Record history before delete
+        $listing->histories()->create([
+            'version' => $listing->version,
+            'snapshot' => $listing->toArray(),
+            'changed_by_id' => $request->user()->id,
+        ]);
+
+        $this->audit->record(
+            action: 'listing.deleted',
+            entity: 'listing',
+            entityId: (string) $listing->id,
+            actor: $request->user(),
+        );
+
+        $listing->delete();
+
+        return redirect()->route('listings.create')->with('status', 'Listing deleted.');
     }
 }

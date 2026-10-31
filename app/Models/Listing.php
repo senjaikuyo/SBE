@@ -63,6 +63,11 @@ class Listing extends Model
         return $this->hasOne(Certificate::class)->latestOfMany();
     }
 
+    public function histories(): HasMany
+    {
+        return $this->hasMany(ListingHistory::class);
+    }
+
     public function canBeActive(): bool
     {
         $cert = $this->certificate ?? $this->certificates()->latest()->first();

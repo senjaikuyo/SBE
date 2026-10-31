@@ -68,7 +68,12 @@ Route::middleware(['auth', 'company', 'two-factor'])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/listings/create', [ListingController::class, 'create'])->name('listings.create');
+    Route::get('/listings/create/energy', [ListingController::class, 'createEnergy'])->name('listings.create.energy');
+    Route::get('/listings/create/carbon', [ListingController::class, 'createCarbon'])->name('listings.create.carbon');
     Route::post('/listings', [ListingController::class, 'store'])->name('listings.store');
+    Route::get('/listings/{listing}/edit', [ListingController::class, 'edit'])->name('listings.edit');
+    Route::patch('/listings/{listing}', [ListingController::class, 'update'])->name('listings.update');
+    Route::delete('/listings/{listing}', [ListingController::class, 'destroy'])->name('listings.destroy');
 
     Route::get('/company/members', [MembersController::class, 'index'])->name('members.index');
     Route::get('/company/members/invite', [MembersController::class, 'create'])->name('members.invite');
