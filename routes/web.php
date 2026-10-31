@@ -4,6 +4,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\InvitationAcceptanceController;
+use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MembersController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorSetupController;
@@ -62,6 +63,9 @@ Route::middleware('auth')->group(function (): void {
 
 Route::middleware(['auth', 'company', 'two-factor'])->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('/listings/create', [ListingController::class, 'create'])->name('listings.create');
+    Route::post('/listings', [ListingController::class, 'store'])->name('listings.store');
 
     Route::get('/company/members', [MembersController::class, 'index'])->name('members.index');
     Route::get('/company/members/invite', [MembersController::class, 'create'])->name('members.invite');

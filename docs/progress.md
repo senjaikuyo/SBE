@@ -9,6 +9,7 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 | FR-01 | Selesai | Registrasi, perusahaan, anggota, peran, 2FA wajib, sesi idle 30 menit, draft form, audit aksi anggota. |
 | FR-12 | Sebagian | Tabel, hash berantai, penjagaan model + trigger MySQL, `audit:verify` selesai. Aksi KYC, listing, sertifikat, admin menyusul di FR terkait. |
 | FR-02 | Selesai | Submit verifikasi (buyer/seller, dokumen per negara + shared, expiry, screening stub, email queue), resubmit dari REJECTED, tolak submit PENDING/APPROVED, admin approve/reject alasan wajib + email, upload dokumen ≤10MB + mimetypes, VirusScanner stub, screening 90 hari, `greengrid:create-admin`. |
+| FR-03 | Selesai | Listing seller: tabel `listings` (energy/carbon_credit), create dengan field wajib per tipe, status DRAFT, version 1. |
 | FR-05 | Belum | |
 | FR-03 | Belum | |
 | FR-11 | Belum | |
@@ -37,6 +38,13 @@ Perbarui di akhir tiap tugas. Format: tanggal, FR, status, catatan, TODO yang te
 - Upload: PDF/JPG/PNG, ≤10 MB, cek mimetypes konten (bukan ekstensi); `VirusScanner` stub; disk privat; download lewat policy.
 - Screening: `SanctionsScreener` stub `clear`; disimpan submission saat submit; `kyc:screening` tiap 90 hari untuk APPROVED.
 - Admin: `php artisan greengrid:create-admin {email}` minta password (min 12, tanpa default), 2FA wajib login pertama, audit `admin.created`.
+
+### 2026-10-31 — FR-03 listing penjual
+
+- Tabel `listings`: type `energy`/`carbon_credit`, energy fields (capacity_mw, volume_available_mw, price_per_kwh, duration_years, start_date, location, permit_reference, photo), carbon fields (quantity_tco2e, vintage, registry_standard, serial_number, price_per_ton).
+- Status awal `DRAFT`, version 1.
+- Buat listing wajib field per tipe; error menyebut field wajib.
+- Hanya perusahaan KYC APPROVED + membership admin/procurement boleh membuat.
 
 ## TODO yang menunggu keputusan
 

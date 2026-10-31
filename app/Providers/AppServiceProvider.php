@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\KycDocument;
+use App\Models\Listing;
 use App\Models\User;
 use App\Policies\CompanyPolicy;
 use App\Policies\PlatformPolicy;
@@ -39,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(User::class, PlatformPolicy::class);
         Gate::policy(KycDocument::class, CompanyPolicy::class);
+        Gate::policy(Listing::class, ListingPolicy::class);
 
         $this->app->bind(SanctionsScreener::class, StubSanctionsScreener::class);
         $this->app->bind(VirusScanner::class, StubVirusScanner::class);
